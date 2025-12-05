@@ -188,14 +188,6 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
-		$this->add_control(
-			'topbar_bg',
-			array(
-				'label'   => __('Topbar Background', 'responsive-theme-preview'),
-				'type'    => Controls_Manager::COLOR,
-				'default' => '#0f172a',
-			)
-		);
 
 		$this->add_control(
 			'preview_btn_pos',
@@ -294,6 +286,185 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 		);
 
 		$this->end_controls_section();
+
+		$this->start_controls_section(
+			'rtp_advanced',
+			array(
+				'label' => __('Advanced Settings', 'responsive-theme-preview'),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+
+		// Animation settings
+		// Note: Animation and frame settings have been removed
+
+		// Device button settings
+		$this->add_control(
+			'advanced_heading_device_buttons',
+			array(
+				'label' => __('Device Button Settings', 'responsive-theme-preview'),
+				'type'  => Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$this->add_control(
+			'device_button_style',
+			array(
+				'label'   => __('Button Style', 'responsive-theme-preview'),
+				'type'    => Controls_Manager::SELECT,
+				'default' => 'default',
+				'options' => array(
+					'default' => __('Default', 'responsive-theme-preview'),
+					'rounded' => __('Rounded', 'responsive-theme-preview'),
+					'square'  => __('Square', 'responsive-theme-preview'),
+				),
+			)
+		);
+
+		$this->add_control(
+			'device_button_size',
+			array(
+				'label'   => __('Button Size', 'responsive-theme-preview'),
+				'type'    => Controls_Manager::SELECT,
+				'default' => 'medium',
+				'options' => array(
+					'small'  => __('Small', 'responsive-theme-preview'),
+					'medium' => __('Medium', 'responsive-theme-preview'),
+					'large'  => __('Large', 'responsive-theme-preview'),
+				),
+			)
+		);
+
+		$this->add_control(
+			'device_button_active_color',
+			array(
+				'label'     => __('Active Button Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#2563eb',
+			)
+		);
+
+		$this->add_control(
+			'device_button_hover_color',
+			array(
+				'label'     => __('Hover Button Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#1d4ed8',
+			)
+		);
+
+		// Topbar settings
+		$this->add_control(
+			'advanced_heading_topbar',
+			array(
+				'label' => __('Topbar Settings', 'responsive-theme-preview'),
+				'type'  => Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+
+
+
+		// Overlay settings
+		$this->add_control(
+			'advanced_heading_overlay',
+			array(
+				'label' => __('Overlay Settings', 'responsive-theme-preview'),
+				'type'  => Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$this->add_control(
+			'overlay_close_on_click',
+			array(
+				'label'   => __('Close on Click Outside', 'responsive-theme-preview'),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'overlay_close_on_esc',
+			array(
+				'label'   => __('Close on ESC Key', 'responsive-theme-preview'),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'overlay_loading_indicator',
+			array(
+				'label'   => __('Show Loading Indicator', 'responsive-theme-preview'),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'overlay_loading_color',
+			array(
+				'label'     => __('Loading Indicator Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#2563eb',
+				'condition' => array('overlay_loading_indicator' => 'yes'),
+			)
+		);
+
+		// Accessibility settings
+		$this->add_control(
+			'advanced_heading_accessibility',
+			array(
+				'label' => __('Accessibility Settings', 'responsive-theme-preview'),
+				'type'  => Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$this->add_control(
+			'enable_keyboard_nav',
+			array(
+				'label'   => __('Enable Keyboard Navigation', 'responsive-theme-preview'),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'focus_outline',
+			array(
+				'label'   => __('Show Focus Outline', 'responsive-theme-preview'),
+				'type'    => Controls_Manager::SWITCHER,
+				'default' => 'yes',
+			)
+		);
+
+		$this->add_control(
+			'focus_outline_color',
+			array(
+				'label'     => __('Focus Outline Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#2563eb',
+				'condition' => array('focus_outline' => 'yes'),
+			)
+		);
+
+		$this->add_control(
+			'focus_outline_width',
+			array(
+				'label'     => __('Focus Outline Width (px)', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::NUMBER,
+				'default'   => 2,
+				'min'       => 1,
+				'max'       => 5,
+				'condition' => array('focus_outline' => 'yes'),
+			)
+		);
+
+		$this->end_controls_section();
 	}
 
 	protected function render() {
@@ -349,6 +520,25 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 			}
 		}
 
+		// Get global settings as base
+		$global_settings = RTP_Admin_Settings::get_settings();
+
+		// Prepare advanced settings, overriding with Elementor settings if provided
+		$advanced_settings = array(
+			'device_button_style' => isset($s['device_button_style']) ? $s['device_button_style'] : $global_settings['device_button_style'],
+			'device_button_size' => isset($s['device_button_size']) ? $s['device_button_size'] : $global_settings['device_button_size'],
+			'device_button_active_color' => isset($s['device_button_active_color']) ? $s['device_button_active_color'] : $global_settings['device_button_active_color'],
+			'device_button_hover_color' => isset($s['device_button_hover_color']) ? $s['device_button_hover_color'] : $global_settings['device_button_hover_color'],
+			'overlay_close_on_click' => isset($s['overlay_close_on_click']) ? ($s['overlay_close_on_click'] === 'yes') : $global_settings['overlay_close_on_click'],
+			'overlay_close_on_esc' => isset($s['overlay_close_on_esc']) ? ($s['overlay_close_on_esc'] === 'yes') : $global_settings['overlay_close_on_esc'],
+			'overlay_loading_indicator' => isset($s['overlay_loading_indicator']) ? ($s['overlay_loading_indicator'] === 'yes') : $global_settings['overlay_loading_indicator'],
+			'overlay_loading_color' => isset($s['overlay_loading_color']) ? $s['overlay_loading_color'] : $global_settings['overlay_loading_color'],
+			'enable_keyboard_nav' => isset($s['enable_keyboard_nav']) ? ($s['enable_keyboard_nav'] === 'yes') : $global_settings['enable_keyboard_nav'],
+			'focus_outline' => isset($s['focus_outline']) ? ($s['focus_outline'] === 'yes') : $global_settings['focus_outline'],
+			'focus_outline_color' => isset($s['focus_outline_color']) ? $s['focus_outline_color'] : $global_settings['focus_outline_color'],
+			'focus_outline_width' => isset($s['focus_outline_width']) ? (int) $s['focus_outline_width'] : $global_settings['focus_outline_width'],
+		);
+
 		echo RTP_Render::html(array(
 			'columns'         => (int) ($s['columns'] ?? 3),
 			'overlay_bg'      => $s['overlay_bg'] ?? 'rgba(0,0,0,.6)',
@@ -357,8 +547,8 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 			'cta_link'       => $s['cta_link'] ?? '',
 			'items'          => $items,
 			'breakpoints'    => $bps,
-			'topbar_bg'      => $s['topbar_bg'] ?? '#0f172a',
 			'preview_type'   => (($s['source'] ?? '') === 'dynamic') ? ($s['preview_type'] ?? 'popup') : 'popup',
+			'advanced_settings' => $advanced_settings,
 		));
 	}
 }

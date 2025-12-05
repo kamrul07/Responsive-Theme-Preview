@@ -18,16 +18,29 @@ class RTP_Block {
 				'itemsArr'       => array('type' => 'array',  'default' => array()),
 				'items'          => array('type' => 'string', 'default' => ''),
 				'breakpoints'    => array('type' => 'array',  'default' => array(
-					array('title' => 'Mobile',  'width' => 375,  'icon' => ''),
-					array('title' => 'Tablet',  'width' => 768,  'icon' => ''),
-					array('title' => 'Desktop', 'width' => 1280, 'icon' => ''),
+					array('title' => 'Mobile',  'width' => 375,  'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE3IDJIN2MtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMGMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE4SDdWNmgxMHYxNHptLTUtMTJoMnY4aC0yVjh6Ii8+PC9zdmc+'),
+					array('title' => 'Tablet',  'width' => 768,  'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE5IDFINVYyM2gxNFYxem0wIDIySDVWM2gxNHYyMHpNOSAxOWg2djJIOXYtMnptMC0xNGg2djEwSDlWNXoiLz48L3N2Zz4='),
+					array('title' => 'Desktop', 'width' => 1280, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE4IDJINmMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE2SDZWNmgxMnYxMnpNOSA4aDZ2Mkg5Vjh6bTAgNGg2djJIOXYtMnptMCA0aDZ2Mkg5di0yeiIvPjwvc3ZnPg=='),
 				)),
 				'ctaText'       => array('type' => 'string', 'default' => 'Open Live'),
 				'ctaLink'       => array('type' => 'string', 'default' => ''),
 				'overlayBg'     => array('type' => 'string', 'default' => 'rgba(0,0,0,.6)'),
-				'topbarBg'      => array('type' => 'string', 'default' => '#0f172a'),
 				'previewBtnPos' => array('type' => 'string', 'default' => 'pos-br'),
 				'previewType'   => array('type' => 'string', 'default' => 'popup'),
+				'topbarHeight' => array('type' => 'number', 'default' => 52),
+				// Advanced settings
+				'deviceButtonStyle' => array('type' => 'string', 'default' => 'default'),
+				'deviceButtonSize' => array('type' => 'string', 'default' => 'medium'),
+				'deviceButtonActiveColor' => array('type' => 'string', 'default' => '#2563eb'),
+				'deviceButtonHoverColor' => array('type' => 'string', 'default' => '#1d4ed8'),
+				'overlayCloseOnClick' => array('type' => 'boolean', 'default' => true),
+				'overlayCloseOnEsc' => array('type' => 'boolean', 'default' => true),
+				'overlayLoadingIndicator' => array('type' => 'boolean', 'default' => true),
+				'overlayLoadingColor' => array('type' => 'string', 'default' => '#2563eb'),
+				'enableKeyboardNav' => array('type' => 'boolean', 'default' => true),
+				'focusOutline' => array('type' => 'boolean', 'default' => true),
+				'focusOutlineColor' => array('type' => 'string', 'default' => '#2563eb'),
+				'focusOutlineWidth' => array('type' => 'number', 'default' => 2),
 			),
 		));
 	}
@@ -82,11 +95,31 @@ class RTP_Block {
 		$bps = (isset($atts['breakpoints']) && is_array($atts['breakpoints'])) ? $atts['breakpoints'] : array();
 		if (! $bps) {
 			$bps = array(
-				array('title' => 'Mobile',  'width' => 375,  'icon' => ''),
-				array('title' => 'Tablet',  'width' => 768,  'icon' => ''),
-				array('title' => 'Desktop', 'width' => 1280, 'icon' => ''),
+				array('title' => 'Mobile',  'width' => 375,  'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE3IDJIN2MtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMGMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE4SDdWNmgxMHYxNHptLTUtMTJoMnY4aC0yVjh6Ii8+PC9zdmc+'),
+				array('title' => 'Tablet',  'width' => 768,  'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE5IDFINVYyM2gxNFYxem0wIDIySDVWM2gxNHYyMHpNOSAxOWg2djJIOXYtMnptMC0xNGg2djEwSDlWNXoiLz48L3N2Zz4='),
+				array('title' => 'Desktop', 'width' => 1280, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE4IDJINmMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE2SDZWNmgxMnYxMnpNOSA4aDZ2Mkg5Vjh6bTAgNGg2djJIOXYtMnptMCA0aDZ2Mkg5di0yeiIvPjwvc3ZnPg=='),
 			);
 		}
+
+		// Get global settings as base
+		$global_settings = RTP_Admin_Settings::get_settings();
+
+		// Prepare advanced settings, overriding with block attributes if provided
+		$advanced_settings = array(
+			'topbar_height' => isset($atts['topbarHeight']) ? (int) $atts['topbarHeight'] : $global_settings['topbar_height'],
+			'device_button_style' => isset($atts['deviceButtonStyle']) ? $atts['deviceButtonStyle'] : $global_settings['device_button_style'],
+			'device_button_size' => isset($atts['deviceButtonSize']) ? $atts['deviceButtonSize'] : $global_settings['device_button_size'],
+			'device_button_active_color' => isset($atts['deviceButtonActiveColor']) ? $atts['deviceButtonActiveColor'] : $global_settings['device_button_active_color'],
+			'device_button_hover_color' => isset($atts['deviceButtonHoverColor']) ? $atts['deviceButtonHoverColor'] : $global_settings['device_button_hover_color'],
+			'overlay_close_on_click' => isset($atts['overlayCloseOnClick']) ? $atts['overlayCloseOnClick'] : $global_settings['overlay_close_on_click'],
+			'overlay_close_on_esc' => isset($atts['overlayCloseOnEsc']) ? $atts['overlayCloseOnEsc'] : $global_settings['overlay_close_on_esc'],
+			'overlay_loading_indicator' => isset($atts['overlayLoadingIndicator']) ? $atts['overlayLoadingIndicator'] : $global_settings['overlay_loading_indicator'],
+			'overlay_loading_color' => isset($atts['overlayLoadingColor']) ? $atts['overlayLoadingColor'] : $global_settings['overlay_loading_color'],
+			'enable_keyboard_nav' => isset($atts['enableKeyboardNav']) ? $atts['enableKeyboardNav'] : $global_settings['enable_keyboard_nav'],
+			'focus_outline' => isset($atts['focusOutline']) ? $atts['focusOutline'] : $global_settings['focus_outline'],
+			'focus_outline_color' => isset($atts['focusOutlineColor']) ? $atts['focusOutlineColor'] : $global_settings['focus_outline_color'],
+			'focus_outline_width' => isset($atts['focusOutlineWidth']) ? (int) $atts['focusOutlineWidth'] : $global_settings['focus_outline_width'],
+		);
 
 		return RTP_Render::html(array(
 			'columns'         => (int) ($atts['columns'] ?? 3),
@@ -96,8 +129,8 @@ class RTP_Block {
 			'cta_link'       => esc_url($atts['ctaLink'] ?? ''),
 			'items'          => $items,
 			'breakpoints'    => $bps,
-			'topbar_bg'      => $atts['topbarBg'] ?? '#0f172a',
 			'preview_type'   => ('dynamic' === $source) ? ($atts['previewType'] ?? 'popup') : 'popup',
+			'advanced_settings' => $advanced_settings,
 		));
 	}
 }

@@ -23,9 +23,15 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			'tab'   => 'content',
 		];
 
-		// Group shown when “Topbar” tab is active
+		// Group shown when "Topbar" tab is active
 		$this->control_groups['topbar'] = [
 			'title' => esc_html__('Topbar Settings', 'responsive-theme-preview'),
+			'tab'   => 'content',
+		];
+
+		// Group shown when "Advanced" tab is active
+		$this->control_groups['advanced'] = [
+			'title' => esc_html__('Advanced Settings', 'responsive-theme-preview'),
 			'tab'   => 'content',
 		];
 	}
@@ -138,14 +144,15 @@ class RTP_Bricks_Element extends \Bricks\Element {
 					'type'  => 'number',
 				),
 				'icon' => array(
-					'label' => esc_html__('Icon Image URL', 'responsive-theme-preview'),
+					'label' => esc_html__('Icon', 'responsive-theme-preview'),
 					'type'  => 'icon',
+					'default' => 'ti-desktop',
 				),
 			),
 			'default' => array(
-				array('title' => 'Desktop', 'width' => 1280, 'icon' => ''),
-				array('title' => 'Tablet',  'width' => 768,  'icon' => ''),
-				array('title' => 'Mobile',  'width' => 375,  'icon' => ''),
+				array('title' => 'Desktop', 'width' => 1280, 'icon' => 'ti-desktop'),
+				array('title' => 'Tablet',  'width' => 768,  'icon' => 'ti-tablet'),
+				array('title' => 'Mobile',  'width' => 375,  'icon' => 'ti-mobile'),
 			),
 		);
 
@@ -296,21 +303,91 @@ class RTP_Bricks_Element extends \Bricks\Element {
 
 
 		];
+
+		$this->controls['advanced_heading_general'] = array(
+			'tab'   => 'content',
+			'group'  => 'topbar',
+			'label'  => esc_html__('General', 'responsive-theme-preview'),
+			'type'   => 'separator',
+		);
+
+		$this->controls['topbar_height'] = array(
+			'tab'     => 'content',
+			'group'    => 'topbar',
+			'label'     => esc_html__('Topbar Height (px)', 'responsive-theme-preview'),
+			'type'      => 'number',
+			'default'   => 52,
+			'min'       => 40,
+			'max'       => 100,
+			'css' => [
+				[
+					'property' => 'height',
+					'selector' => '.rtp-topbar',
+				],
+				[
+					'property' => 'top',
+					'selector' => '.rtp-framewrap',
+				]
+			],
+		);
+
+		$this->controls['topbar_title_typography'] = [
+			'tab' => 'content',
+			'group' => 'topbar',
+			'label' => esc_html__('Title Typography', 'responsive-theme-preview'),
+			'type' => 'typography',
+			'css' => [
+				[
+					'property' => 'typography',
+					'selector' => '.rtp-topbar-title',
+				],
+			],
+			'inline' => true,
+		];
+
+		$this->controls['topbar_title_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'topbar',
+			'label'     => esc_html__('Title Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#ffffff',
+			'css' => [
+				[
+					'property' => 'color',
+					'selector' => '.rtp-topbar-title',
+				]
+			],
+		);
 		$this->controls['overlay_bg'] = array(
 			'tab'     => 'content',
-			'group'  => 'topbar',
+			'group'   => 'topbar',
 			'label'   => esc_html__('Overlay BG', 'responsive-theme-preview'),
 			'type'    => 'color',
 			'default' => 'rgba(0,0,0,.6)',
+			'css'     => array(
+				array(
+					'property' => 'background-color',
+					'selector' => '.rtp-overlay:after',
+				),
+			),
 		);
 
-		$this->controls['topbar_bg'] = array(
-			'tab'     => 'content',
-			'group'  => 'topbar',
-			'label'   => esc_html__('Topbar BG', 'responsive-theme-preview'),
-			'type'    => 'color',
-			'default' => '#0f172a',
-		);
+		$this->controls['overlay_opacity'] = [
+			'tab' => 'content',
+			'group' => 'topbar',
+			'label' => esc_html__('CSS filters', 'responsive-theme-preview'),
+			'type' => 'filters',
+			'inline' => true,
+			'css' => [
+				[
+					'property' => 'filter',
+					'selector' => '.rtp-overlay:after',
+				],
+			],
+		];
+
+
+
 
 		$this->controls['preview_btn_pos'] = array(
 			'tab'     => 'content',
@@ -325,6 +402,272 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			),
 			'default' => 'pos-br',
 		);
+		$this->controls['advanced_heading_device'] = array(
+			'tab'   => 'content',
+			'group'  => 'topbar',
+			'label'  => esc_html__('Device Button', 'responsive-theme-preview'),
+			'type'   => 'separator',
+		);
+		$this->controls['device_button_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'topbar',
+			'label'     => esc_html__('Button BG Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#1d4ed8',
+			'css' => [
+				[
+					'property' => 'background',
+					'selector' => '.rtp-devices button',
+				]
+			],
+		);
+		$this->controls['device_button_active_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'topbar',
+			'label'     => esc_html__('Active Button Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#2563eb',
+			'css' => [
+				[
+					'property' => 'background',
+					'selector' => '.rtp-devices button.active',
+				]
+			],
+		);
+		$this->controls['buttonDevice'] = [
+			'tab'   => 'content',
+			'group' => 'topbar',
+			'label' => esc_html__('Padding', 'responsive-theme-preview'),
+			'type'  => 'dimensions',
+			'css'   => [
+				[
+					'property' => 'padding',
+					'selector' => '.rtp-devices button',
+				]
+			],
+			'default' => [
+				'top' => '6px',
+				'right' => '10px',
+				'bottom' => '6px',
+				'left' => '10px',
+			],
+		];
+		$this->controls['devicebuttonBorder'] = [
+			'tab'   => 'content',
+			'group' => 'topbar',
+			'label' => esc_html__('Title border', 'responsive-theme-preview'),
+			'type'  => 'border',
+			'css'   => [
+				[
+					'property' => 'border',
+					'selector' => '.rtp-devices button',
+				],
+			],
+			'inline' => true,
+			'small' => true,
+			'default' => [
+				'width' => [
+					'top' => 0,
+					'right' => 0,
+					'bottom' => 0,
+					'left' => 0,
+				],
+				'style' => 'none',
+				'color' => [
+					'hex' => '#ffff00',
+				],
+				'radius' => [
+					'top' => 8,
+					'right' => 8,
+					'bottom' => 8,
+					'left' => 8,
+				],
+			],
+
+
+		];
+		$this->controls['advanced_heading_cta'] = array(
+			'tab'   => 'content',
+			'group'  => 'topbar',
+			'label'  => esc_html__('CTA Button', 'responsive-theme-preview'),
+			'type'   => 'separator',
+		);
+		$this->controls['cta_button_bg_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'topbar',
+			'label'     => esc_html__('Button BG Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#2563eb',
+			'css' => [
+				[
+					'property' => 'color',
+					'selector' => '.rtp-cta',
+				]
+			],
+		);
+		$this->controls['cta_button_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'topbar',
+			'label'     => esc_html__('Button Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#fff',
+			'css' => [
+				[
+					'property' => 'background',
+					'selector' => '.rtp-cta',
+				]
+			],
+		);
+
+		$this->controls['cta_padding'] = [
+			'tab'   => 'content',
+			'group' => 'topbar',
+			'label' => esc_html__('Padding', 'responsive-theme-preview'),
+			'type'  => 'dimensions',
+			'css'   => [
+				[
+					'property' => 'padding',
+					'selector' => '.rtp-cta',
+				]
+			],
+			'default' => [
+				'top' => '6px',
+				'right' => '10px',
+				'bottom' => '6px',
+				'left' => '10px',
+			],
+		];
+		$this->controls['ctabuttonBorder'] = [
+			'tab'   => 'content',
+			'group' => 'topbar',
+			'label' => esc_html__('border', 'responsive-theme-preview'),
+			'type'  => 'border',
+			'css'   => [
+				[
+					'property' => 'border',
+					'selector' => '.rtp-cta',
+				],
+			],
+			'inline' => true,
+			'small' => true,
+			'default' => [
+				'width' => [
+					'top' => 0,
+					'right' => 0,
+					'bottom' => 0,
+					'left' => 0,
+				],
+				'style' => 'none',
+				'color' => [
+					'hex' => '#ffff00',
+				],
+				'radius' => [
+					'top' => 8,
+					'right' => 8,
+					'bottom' => 8,
+					'left' => 8,
+				],
+			],
+
+
+		];
+		$this->controls['cta_typography'] = [
+			'tab' => 'content',
+			'group' => 'topbar',
+			'label' => esc_html__('Typography', 'responsive-theme-preview'),
+			'type' => 'typography',
+			'css' => [
+				[
+					'property' => 'typography',
+					'selector' => '.rtp-cta',
+				],
+			],
+			'inline' => true,
+		];
+		// Overlay settings
+		$this->controls['advanced_heading_overlay'] = array(
+			'tab'   => 'content',
+			'group'  => 'advanced',
+			'label'  => esc_html__('Close Settings', 'responsive-theme-preview'),
+			'type'   => 'separator',
+		);
+
+		$this->controls['overlay_close_on_click'] = array(
+			'tab'    => 'content',
+			'group'   => 'advanced',
+			'label'   => esc_html__('Close on Click Outside', 'responsive-theme-preview'),
+			'type'    => 'checkbox',
+			'default' => true,
+		);
+
+		$this->controls['overlay_close_on_esc'] = array(
+			'tab'    => 'content',
+			'group'   => 'advanced',
+			'label'   => esc_html__('Close on ESC Key', 'responsive-theme-preview'),
+			'type'    => 'checkbox',
+			'default' => true,
+		);
+
+		$this->controls['overlay_loading_indicator'] = array(
+			'tab'    => 'content',
+			'group'   => 'advanced',
+			'label'   => esc_html__('Show Loading Indicator', 'responsive-theme-preview'),
+			'type'    => 'checkbox',
+			'default' => true,
+		);
+
+		$this->controls['overlay_loading_color'] = array(
+			'tab'      => 'content',
+			'group'     => 'advanced',
+			'label'     => esc_html__('Loading Indicator Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#2563eb',
+			'required'  => array('overlay_loading_indicator', '=', true),
+		);
+
+		// Accessibility settings
+		$this->controls['advanced_heading_accessibility'] = array(
+			'tab'   => 'content',
+			'group'  => 'advanced',
+			'label'  => esc_html__('Accessibility Settings', 'responsive-theme-preview'),
+			'type'   => 'separator',
+		);
+
+		$this->controls['enable_keyboard_nav'] = array(
+			'tab'    => 'content',
+			'group'   => 'advanced',
+			'label'   => esc_html__('Enable Keyboard Navigation', 'responsive-theme-preview'),
+			'type'    => 'checkbox',
+			'default' => true,
+		);
+
+		$this->controls['focus_outline'] = array(
+			'tab'    => 'content',
+			'group'   => 'advanced',
+			'label'   => esc_html__('Show Focus Outline', 'responsive-theme-preview'),
+			'type'    => 'checkbox',
+			'default' => true,
+		);
+
+		$this->controls['focus_outline_color'] = array(
+			'tab'      => 'content',
+			'group'     => 'advanced',
+			'label'     => esc_html__('Focus Outline Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#2563eb',
+			'required'  => array('focus_outline', '=', true),
+		);
+
+		$this->controls['focus_outline_width'] = array(
+			'tab'      => 'content',
+			'group'     => 'advanced',
+			'label'     => esc_html__('Focus Outline Width (px)', 'responsive-theme-preview'),
+			'type'      => 'number',
+			'default'   => 2,
+			'min'       => 1,
+			'max'       => 5,
+			'required'  => array('focus_outline', '=', true),
+		);
 	}
 
 	public function render() {
@@ -333,12 +676,8 @@ class RTP_Bricks_Element extends \Bricks\Element {
 
 		// Get current Bricks element DOM id (e.g., "brxe-abc123")
 		$section_id = '';
-		if (method_exists($this, 'get_id') && $this->get_id()) {
-			$section_id = 'brxe-' . $this->get_id();
-		} elseif (property_exists($this, 'id') && !empty($this->id)) {
+		if (isset($this->id) && !empty($this->id)) {
 			$section_id = 'brxe-' . $this->id;
-		} elseif (property_exists($this, 'element_id') && !empty($this->element_id)) {
-			$section_id = 'brxe-' . $this->element_id;
 		}
 
 
@@ -389,14 +728,75 @@ class RTP_Bricks_Element extends \Bricks\Element {
 		$bps = array();
 		if (!empty($s['breakpoints']) && is_array($s['breakpoints'])) {
 			foreach ($s['breakpoints'] as $bp) {
+				$iconVal = isset($bp['icon']) ? $bp['icon'] : '';
+				$iconUrl = '';
+				$iconClass = '';
+
+				// Debug: Log the icon value to understand its format
+				error_log('RTP Bricks Icon Value: ' . print_r($iconVal, true));
+
+				// Handle different icon formats from Bricks
+				if (is_array($iconVal)) {
+					// Bricks might return icon as array with different structure
+					if (!empty($iconVal['library']) && !empty($iconVal['name'])) {
+						// Font icon format: {library: 'themify', name: 'desktop'}
+						$iconClass = 'ti-' . $iconVal['name'];
+					} elseif (!empty($iconVal['url'])) {
+						// Image icon format: {url: 'https://...'}
+						$iconUrl = $iconVal['url'];
+					} elseif (!empty($iconVal['src'])) {
+						// Alternative image format: {src: 'https://...'}
+						$iconUrl = $iconVal['src'];
+					} elseif (!empty($iconVal['icon'])) {
+						// Nested icon format: {icon: 'ti-desktop'}
+						$iconClass = $iconVal['icon'];
+					}
+				} elseif (is_string($iconVal)) {
+					if (preg_match('/^https?:\/\//', $iconVal)) {
+						// Direct URL string
+						$iconUrl = $iconVal;
+					} elseif (!empty($iconVal)) {
+						// Icon class string like 'ti-desktop'
+						$iconClass = $iconVal;
+					}
+				}
+
+				// If we have an icon class, use it; otherwise use the URL
+				$finalIcon = $iconClass ? $iconClass : $iconUrl;
+
 				$bps[] = array(
 					'title' => isset($bp['title']) ? $bp['title'] : '',
 					'width' => isset($bp['width']) ? (int)$bp['width'] : 1280,
-					'icon'  => isset($bp['icon']) ? $bp['icon'] : '',
+					'icon'  => $finalIcon,
 				);
 			}
 		}
+		// Get global settings as base
+		$global_settings = RTP_Admin_Settings::get_settings();
+
+		// Prepare advanced settings, overriding with Bricks settings if provided
+		$advanced_settings = array(
+			'device_button_style' => isset($s['device_button_style']) ? $s['device_button_style'] : $global_settings['device_button_style'],
+			'device_button_size' => isset($s['device_button_size']) ? $s['device_button_size'] : $global_settings['device_button_size'],
+			'device_button_active_color' => isset($s['device_button_active_color']) ? $s['device_button_active_color'] : $global_settings['device_button_active_color'],
+			'device_button_hover_color' => isset($s['device_button_hover_color']) ? $s['device_button_hover_color'] : $global_settings['device_button_hover_color'],
+			'overlay_close_on_click' => isset($s['overlay_close_on_click']) ? ($s['overlay_close_on_click'] === true) : $global_settings['overlay_close_on_click'],
+			'overlay_close_on_esc' => isset($s['overlay_close_on_esc']) ? ($s['overlay_close_on_esc'] === true) : $global_settings['overlay_close_on_esc'],
+			'overlay_loading_indicator' => isset($s['overlay_loading_indicator']) ? ($s['overlay_loading_indicator'] === true) : $global_settings['overlay_loading_indicator'],
+			'overlay_loading_color' => isset($s['overlay_loading_color']) ? $s['overlay_loading_color'] : $global_settings['overlay_loading_color'],
+			'enable_keyboard_nav' => isset($s['enable_keyboard_nav']) ? ($s['enable_keyboard_nav'] === true) : $global_settings['enable_keyboard_nav'],
+			'focus_outline' => isset($s['focus_outline']) ? ($s['focus_outline'] === true) : $global_settings['focus_outline'],
+			'focus_outline_color' => isset($s['focus_outline_color']) ? $s['focus_outline_color'] : $global_settings['focus_outline_color'],
+			'focus_outline_width' => isset($s['focus_outline_width']) ? (int) $s['focus_outline_width'] : $global_settings['focus_outline_width'],
+		);
+
 		echo "<div id='" . esc_attr($section_id) . "'>";
+		echo "";
+		echo "<style>#$section_id #rtp-frame {
+				height: calc(100vh - " . esc_attr($s['topbar_height'] ?? 3) . ");
+			}</style>";
+		echo "";
+
 		echo RTP_Render::html(array(
 			'columns'         => (int)($s['columns'] ?? 3),
 			'overlay_bg'      => $s['overlay_bg'] ?? 'rgba(0,0,0,.6)',
@@ -405,8 +805,8 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			'cta_link'        => $s['cta_link'] ?? '',
 			'items'           => $items,
 			'breakpoints'     => $bps,
-			'topbar_bg'       => $s['topbar_bg']["hex"] ?? '#0f172a',
 			'preview_type'    => (($s['source'] ?? '') === 'dynamic') ? ($s['preview_type'] ?? 'popup') : 'popup',
+			'advanced_settings' => $advanced_settings,
 		));
 		echo "</div>";
 	}

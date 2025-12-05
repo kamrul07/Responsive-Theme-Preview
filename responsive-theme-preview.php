@@ -30,6 +30,7 @@ add_action('plugins_loaded', function () {
 add_action('wp_enqueue_scripts', function () {
 	wp_register_style('rtp-front', RTP_URL . 'assets/css/front.css', array(), RTP_VER);
 	wp_register_script('rtp-front', RTP_URL . 'assets/js/front.js', array(), RTP_VER, true);
+
 	wp_enqueue_style('rtp-front');
 	wp_enqueue_script('rtp-front');
 }, 20);
@@ -39,6 +40,8 @@ require_once __DIR__ . '/includes/class-tracker.php';
 require_once __DIR__ . '/includes/class-render.php';
 require_once __DIR__ . '/includes/class-shortcode.php';
 require_once __DIR__ . '/includes/class-block.php';
+require_once __DIR__ . '/includes/class-advanced-settings.php';
+require_once __DIR__ . '/includes/class-admin-settings.php';
 
 add_action('elementor/widgets/register', function ($widgets_manager) {
 	if (class_exists('\Elementor\Widget_Base')) {
@@ -83,17 +86,56 @@ add_action('template_redirect', function () {
 	$title   = get_the_title($post_id);
 	$url     = get_post_meta($post_id, RTP_CPT::META_URL, true);
 	$url     = esc_url($url);
-	$topbg   = '#0f172a';
 
-	$bps = array(
-		array('title' => 'Desktop', 'width' => 1280, 'icon' => ''),
-		array('title' => 'Tablet',  'width' => 768,  'icon' => ''),
-		array('title' => 'Mobile',  'width' => 375,  'icon' => ''),
+	// Get global settings for breakpoints
+	$global_settings = array();
+	if (class_exists('RTP_Admin_Settings')) {
+		$global_settings = RTP_Admin_Settings::get_settings();
+	} else {
+		// Fallback to default if admin settings not available
+		$global_settings = array(
+			'default_breakpoints' => array(
+				array('title' => 'Desktop', 'width' => 1280, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE4IDJINmMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE2SDZWNmgxMnYxMnpNOSA4aDZ2Mkg5Vjh6bTAgNGg2djJIOXYtMnptMCA0aDZ2Mkg5di0yeiIvPjwvc3ZnPg=='),
+				array('title' => 'Tablet',  'width' => 768, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE5IDFINVYyM2gxNFYxem0wIDIySDVWM2gxNHYyMHpNOSAxOWg2djJIOXYtMnptMC0xNGg2djEwSDlWNXoiLz48L3N2Zz4='),
+				array('title' => 'Mobile', 'width' => 375, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE3IDJIN2MtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMGMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE4SDdWNmgxMHYxNHptLTUtMTJoMnY4aC0yVjh6Ii8+PC9zdmc+'),
+			),
+		);
+	}
+
+	// Use breakpoints from global settings if available, otherwise use defaults
+	$bps = isset($global_settings['default_breakpoints']) && !empty($global_settings['default_breakpoints']) ? $global_settings['default_breakpoints'] : array(
+		array('title' => 'Desktop', 'width' => 1280, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE4IDJINmMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE2SDZWNmgxMnYxMnpNOSA4aDZ2Mkg5Vjh6bTAgNGg2djJIOXYtMnptMCA0aDZ2Mkg5di0yeiIvPjwvc3ZnPg=='),
+		array('title' => 'Tablet',  'width' => 768, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE5IDFINVYyM2gxNFYxem0wIDIySDVWM2gxNHYyMHpNOSAxOWg2djJIOXYtMnptMC0xNGg2djEwSDlWNXoiLz48L3N2Zz4='),
+		array('title' => 'Mobile', 'width' => 375, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE3IDJIN2MtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMGMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE4SDdWNmgxMHYxNHptLTUtMTJoMnY4aC0yVjh6Ii8+PC9zdmc+'),
 	);
 
 	$views = (int) get_post_meta($post_id, RTP_CPT::META_VIEWS, true);
 	$views++;
 	update_post_meta($post_id, RTP_CPT::META_VIEWS, $views);
+
+	// Get global settings for single preview page
+	$global_settings = array();
+	if (class_exists('RTP_Admin_Settings')) {
+		$global_settings = RTP_Admin_Settings::get_settings();
+	} else {
+		// Debug: Admin settings class not found, using defaults
+		$global_settings = array(
+			'topbar_height' => 52,
+			'device_button_active_color' => '#2563eb',
+			'device_button_hover_color' => '#1d4ed8',
+			'overlay_close_on_click' => true,
+			'overlay_close_on_esc' => true,
+			'overlay_loading_indicator' => true,
+			'overlay_loading_color' => '#2563eb',
+			'enable_keyboard_nav' => true,
+			'focus_outline' => true,
+			'focus_outline_color' => '#2563eb',
+			'focus_outline_width' => 2,
+		);
+	}
+
+	// Debug output
+	error_log('RTP Global Settings: ' . print_r($global_settings, true));
 
 	status_header(200);
 	nocache_headers();
@@ -108,11 +150,7 @@ add_action('template_redirect', function () {
 		<link rel="stylesheet" href="<?php echo esc_url(RTP_URL . 'assets/css/front.css'); ?>?ver=<?php echo esc_attr(RTP_VER); ?>" />
 		<style>
 			.rtp-overlay {
-				display: block
-			}
-
-			.rtp-framewrap {
-				top: 52px
+				display: block;
 			}
 		</style>
 		<?php wp_head(); ?>
@@ -120,17 +158,60 @@ add_action('template_redirect', function () {
 
 	<body <?php body_class('rtp-preview-page'); ?>>
 		<div class="rtp-wrapper">
-			<div class="rtp-topbar" style="background:<?php echo esc_attr($topbg); ?>">
+			<div class="rtp-topbar" style="background:<?php echo esc_attr($topbg); ?>;height: <?php echo (int) $global_settings['topbar_height']; ?>px; ?>">
 				<div class="rtp-topbar-title"><?php echo esc_html($title); ?></div>
 				<div class="rtp-devices">
-					<button data-w="100%" title="Desktop">•</button>
-					<button data-w="768px" title="Tablet">••</button>
-					<button data-w="375px" title="Mobile">•••</button>
+					<?php foreach ($bps as $bp) :
+						$w = isset($bp['width']) ? (int) $bp['width'] : 1280;
+						$t = isset($bp['title']) ? sanitize_text_field($bp['title']) : '';
+						$iconVal = isset($bp['icon']) ? $bp['icon'] : '';
+						$iconUrl = '';
+						$iconClass = '';
+
+						// Handle different icon formats - now primarily image URLs
+						if (is_array($iconVal)) {
+							if (!empty($iconVal['url'])) {
+								// Image icon format: {url: 'https://...'}
+								$iconUrl = esc_url($iconVal['url']);
+							} elseif (!empty($iconVal['src'])) {
+								// Alternative image format: {src: 'https://...'}
+								$iconUrl = esc_url($iconVal['src']);
+							} elseif (!empty($iconVal['icon'])) {
+								// Nested icon format: {icon: 'https://...'}
+								if (preg_match('/^https?:\/\//', $iconVal['icon'])) {
+									$iconUrl = esc_url($iconVal['icon']);
+								} else {
+									$iconClass = esc_attr($iconVal['icon']);
+								}
+							}
+						} elseif (is_string($iconVal) && preg_match('/^https?:\/\//', $iconVal)) {
+							// Image URL format
+							$iconUrl = esc_url($iconVal);
+						} elseif (is_string($iconVal) && !empty($iconVal)) {
+							// For backward compatibility - check if it's an icon class or image URL
+							if (preg_match('/^https?:\/\//', $iconVal)) {
+								$iconUrl = esc_url($iconVal);
+							} else {
+								// Fallback to icon class for backward compatibility
+								$iconClass = esc_attr($iconVal);
+							}
+						}
+					?>
+						<button data-w="<?php echo (int) $w; ?>px" title="<?php echo esc_attr($t); ?>">
+							<?php if ($iconUrl) : ?>
+								<img class="rtp-ic" src="<?php echo $iconUrl; ?>" alt="<?php echo esc_attr($t); ?>" />
+							<?php elseif ($iconClass) : ?>
+								<i class="rtp-ic <?php echo $iconClass; ?>"></i>
+							<?php else : ?>
+								<span class="rtp-ic"><?php echo esc_html($t ? substr($t, 0, 1) : '•'); ?></span>
+							<?php endif; ?>
+						</button>
+					<?php endforeach; ?>
 				</div>
 				<a class="rtp-cta" href="<?php echo $url ? $url : '#'; ?>" target="_blank" rel="noopener"><?php esc_html_e('Open Live', 'responsive-theme-preview'); ?></a>
 			</div>
-			<div class="rtp-framewrap">
-				<iframe id="rtp-frame" src="<?php echo $url; ?>" loading="lazy" style="width:100%;height:calc(100vh - 52px)"></iframe>
+			<div class="rtp-framewrap" style="width:100%;top: <?php echo (int) $global_settings['topbar_height']; ?>px">
+				<iframe id="rtp-frame" src="<?php echo $url; ?>" style="width:100%;height:calc(100vh - <?php echo (int) $global_settings['topbar_height']; ?>px)"></iframe>
 			</div>
 		</div>
 
