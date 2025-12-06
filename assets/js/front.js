@@ -150,7 +150,6 @@
 
         openOverlay(url, postId, title);
         var tb = document.querySelector(".rtp-overlay .rtp-topbar");
-        if (tb) tb.style.background = topbar || "#0f172a";
         if (cta) cta.textContent = ctaText || "Open Live";
         if (cta && (ctaLink || url)) cta.setAttribute("href", ctaLink || url);
 

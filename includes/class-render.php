@@ -43,12 +43,12 @@ class RTP_Render {
 
 		ob_start();
 ?>
-		<style>
-			<?php echo $advanced_css;
-			?>
-		</style>
-		<div class="rtp-grid cols-<?php echo (int) $columns; ?>">
-			<?php foreach ($items as $it) :
+<style>
+<?php echo $advanced_css;
+?>
+</style>
+<div class="rtp-grid cols-<?php echo (int) $columns; ?>">
+    <?php foreach ($items as $it) :
 				$img  = ! empty($it['image']) ? esc_url($it['image']) : '';
 				$ttl  = ! empty($it['title']) ? sanitize_text_field($it['title']) : '';
 				$url  = ! empty($it['url']) ? esc_url($it['url']) : '';
@@ -56,25 +56,25 @@ class RTP_Render {
 				$pid  = ! empty($it['post_id']) ? (int) $it['post_id'] : 0;
 				$plink = ! empty($it['permalink']) ? esc_url($it['permalink']) : '';
 			?>
-				<div class="rtp-card <?php echo esc_attr($preview_btn_pos); ?>">
-					<?php if ($img) : ?>
-						<div class="rtp-thumb">
-							<img src="<?php echo $img; ?>" alt="<?php echo esc_attr($ttl); ?>">
-							<button class="rtp-open <?php echo esc_attr($preview_btn_pos); ?>" data-mode="<?php echo esc_attr($preview_type); ?>" data-url="<?php echo $url; ?>" data-title="<?php echo esc_attr($ttl); ?>" data-bps="<?php echo $bps_json; ?>" data-cta-text="<?php echo esc_attr($cta_text); ?>" data-cta-link="<?php echo esc_attr($cta_link); ?>" <?php echo $pid ? 'data-postid="' . (int) $pid . '"' : ''; ?> <?php echo $plink ? 'data-permalink="' . esc_url($plink) . '"' : ''; ?>><?php echo esc_html($btn); ?></button>
-						</div>
-					<?php endif; ?>
-					<?php if ($ttl) : ?><div class="rtp-title"><?php echo esc_html($ttl); ?></div><?php endif; ?>
-				</div>
-			<?php endforeach; ?>
-		</div>
+    <div class="rtp-card <?php echo esc_attr($preview_btn_pos); ?>">
+        <?php if ($img) : ?>
+        <div class="rtp-thumb">
+            <img src="<?php echo $img; ?>" alt="<?php echo esc_attr($ttl); ?>">
+            <button class="rtp-open <?php echo esc_attr($preview_btn_pos); ?>" data-mode="<?php echo esc_attr($preview_type); ?>" data-url="<?php echo $url; ?>" data-title="<?php echo esc_attr($ttl); ?>" data-bps="<?php echo $bps_json; ?>" data-cta-text="<?php echo esc_attr($cta_text); ?>" data-cta-link="<?php echo esc_attr($cta_link); ?>" <?php echo $pid ? 'data-postid="' . (int) $pid . '"' : ''; ?> <?php echo $plink ? 'data-permalink="' . esc_url($plink) . '"' : ''; ?>><?php echo esc_html($btn); ?></button>
+        </div>
+        <?php endif; ?>
+        <?php if ($ttl) : ?><div class="rtp-title"><?php echo esc_html($ttl); ?></div><?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+</div>
 
 
-		<div class="topbarWrapper" id="<?php echo esc_attr($section_id); ?>">
-			<div class="rtp-overlay dd" id="rtp-overlay" style="background:<?php echo esc_attr($overlay_bg); ?>">
-				<div class="rtp-topbar">
-					<div class="rtp-topbar-title" id="rtp-topbar-title"></div>
-					<div class="rtp-devices">
-						<?php foreach ($bps as $bp) :
+<div class="topbarWrapper" id="<?php echo esc_attr($section_id); ?>">
+    <div class="rtp-overlay dd" id="rtp-overlay">
+        <div class="rtp-topbar">
+            <div class="rtp-topbar-title" id="rtp-topbar-title"></div>
+            <div class="rtp-devices">
+                <?php foreach ($bps as $bp) :
 							$w = isset($bp['width']) ? (int) $bp['width'] : 1280;
 							$t = isset($bp['title']) ? sanitize_text_field($bp['title']) : '';
 							$iconVal = isset($bp['icon']) ? $bp['icon'] : '';
@@ -100,28 +100,28 @@ class RTP_Render {
 								$iconClass = esc_attr($iconVal);
 							}
 						?>
-							<button data-w="<?php echo (int) $w; ?>" title="<?php echo esc_attr($t); ?>">
-								<?php if ($iconUrl) : ?>
-									<img class="rtp-ic" src="<?php echo $iconUrl; ?>" alt="<?php echo esc_attr($t); ?>" />
-								<?php elseif ($iconClass) : ?>
-									<i class="rtp-ic <?php echo $iconClass; ?>"></i>
-								<?php else : ?>
-									<span class="rtp-ic"><?php echo esc_html($t ? substr($t, 0, 1) : '•'); ?></span>
-								<?php endif; ?>
-							</button>
-						<?php endforeach; ?>
-					</div>
-					<a class="rtp-cta" href="<?php echo esc_url($cta_link ? $cta_link : '#'); ?>" target="_blank" rel="noopener"><?php echo esc_html($cta_text); ?></a>
-					<button class="rtp-close" aria-label="<?php esc_attr_e('Close', 'responsive-theme-preview'); ?>">✕</button>
-				</div>
-				<div class="rtp-framewrap"><iframe id="rtp-frame" src="" loading="lazy"></iframe></div>
-			</div>
-		</div>
-		<script>
-			if (typeof window.RTPAdvanced === 'undefined') {
-				window.RTPAdvanced = <?php echo wp_json_encode($js_config); ?>;
-			}
-		</script>
+                <button data-w="<?php echo (int) $w; ?>" title="<?php echo esc_attr($t); ?>">
+                    <?php if ($iconUrl) : ?>
+                    <img class="rtp-ic" src="<?php echo $iconUrl; ?>" alt="<?php echo esc_attr($t); ?>" />
+                    <?php elseif ($iconClass) : ?>
+                    <i class="rtp-ic <?php echo $iconClass; ?>"></i>
+                    <?php else : ?>
+                    <span class="rtp-ic"><?php echo esc_html($t ? substr($t, 0, 1) : '•'); ?></span>
+                    <?php endif; ?>
+                </button>
+                <?php endforeach; ?>
+            </div>
+            <a class="rtp-cta" href="<?php echo esc_url($cta_link ? $cta_link : '#'); ?>" target="_blank" rel="noopener"><?php echo esc_html($cta_text); ?></a>
+            <button class="rtp-close" aria-label="<?php esc_attr_e('Close', 'responsive-theme-preview'); ?>">✕</button>
+        </div>
+        <div class="rtp-framewrap"><iframe id="rtp-frame" src="" loading="lazy"></iframe></div>
+    </div>
+</div>
+<script>
+if (typeof window.RTPAdvanced === 'undefined') {
+    window.RTPAdvanced = <?php echo wp_json_encode($js_config); ?>;
+}
+</script>
 <?php
 		return ob_get_clean();
 	}

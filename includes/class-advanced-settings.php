@@ -19,6 +19,11 @@ class RTP_Advanced_Settings {
 
 			// Topbar settings
 			'topbar_height' => 52,
+			'topbar_sticky' => true,
+			'topbar_hide_on_scroll' => false,
+			'topbar_title_size' => 16,
+			'topbar_title_weight' => '400',
+			'topbar_bg' => '#ffffff',
 
 			// Overlay settings
 			'overlay_close_on_click' => true,
@@ -85,7 +90,8 @@ class RTP_Advanced_Settings {
 
 			switch ($key) {
 				// Boolean values
-				case 'topbar_height':
+				case 'topbar_sticky':
+				case 'topbar_hide_on_scroll':
 				case 'overlay_close_on_click':
 				case 'overlay_close_on_esc':
 				case 'overlay_loading_indicator':
@@ -103,6 +109,7 @@ class RTP_Advanced_Settings {
 
 				// Integer values
 				case 'topbar_height':
+				case 'topbar_title_size':
 				case 'cache_duration':
 				case 'focus_outline_width':
 					$sanitized[$key] = (int) $value;
@@ -140,6 +147,14 @@ class RTP_Advanced_Settings {
 
 				case 'preview_start_with_device':
 					$sanitized[$key] = in_array($value, array('desktop', 'tablet', 'mobile')) ? $value : $default;
+					break;
+
+				case 'topbar_title_weight':
+					$sanitized[$key] = in_array($value, array('100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold')) ? $value : $default;
+					break;
+
+				case 'topbar_bg':
+					$sanitized[$key] = sanitize_hex_color($value);
 					break;
 
 				case 'custom_css':
