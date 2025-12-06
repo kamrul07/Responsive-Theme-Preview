@@ -1,0 +1,297 @@
+/* Responsive Theme Preview Admin Styles */
+
+/* Main container */
+.rtp-settings-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* WordPress-style Tab Navigation */
+.rtp-tab-nav.nav-tab-wrapper {
+  margin-bottom: 0;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0;
+}
+
+.rtp-tab-nav .nav-tab {
+  background: #f1f1f1;
+  border: 1px solid #ccc;
+  border-bottom: none;
+  color: #0073aa;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-right: 4px;
+  padding: 8px 12px 6px;
+  text-decoration: none;
+  position: relative;
+  top: 1px;
+  transition: all 0.2s ease;
+}
+
+.rtp-tab-nav .nav-tab:hover {
+  background-color: #fff;
+  color: #0073aa;
+}
+
+.rtp-tab-nav .nav-tab.nav-tab-active,
+.rtp-tab-nav .nav-tab.active {
+  background: #fff;
+  border-bottom: 1px solid #fff;
+  color: #000;
+  font-weight: 600;
+  box-shadow: 0 2px 0 #fff;
+}
+
+/* Tab Content Container */
+.rtp-tab-content-container {
+  background: #fff;
+  border: 1px solid #ccd0d4;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+  padding: 0;
+}
+
+/* Tab Content Styling */
+.rtp-tab-content {
+  display: none;
+  padding: 0;
+}
+
+.rtp-tab-content.active {
+  display: block;
+}
+
+.rtp-sections-wrapper {
+  padding: 20px;
+}
+
+/* Settings sections styling */
+.rtp-tab-content h2 {
+  margin-top: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 20px;
+  font-size: 1.3em;
+  color: #23282d;
+}
+
+.rtp-tab-content h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 1.1em;
+  color: #23282d;
+}
+
+/* Form styling */
+.form-table {
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+
+.form-table th {
+  font-weight: 600;
+  color: #23282d;
+  width: 200px;
+  text-align: left;
+  vertical-align: top;
+  padding: 20px 10px 20px 0;
+}
+
+.form-table td {
+  padding: 20px 10px;
+  vertical-align: top;
+}
+
+.form-table input[type="text"],
+.form-table input[type="number"],
+.form-table select,
+.form-table textarea {
+  width: 25em;
+  max-width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #8c8f94;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-table input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.2);
+}
+
+.form-table .description {
+  color: #666;
+  font-style: italic;
+  margin-top: 8px;
+  display: block;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Color picker styling */
+.rtp-color-picker {
+  width: 80px;
+  padding: 4px;
+  border: 1px solid #8c8f94;
+  border-radius: 4px;
+}
+
+.rtp-number-field {
+  width: 80px;
+}
+
+/* Button styling */
+.rtp-tab-content .submit {
+  padding: 20px;
+  margin: 0;
+  background: #fff;
+  border-top: 1px solid #eee;
+  text-align: left;
+}
+
+.rtp-tab-content .submit .button-primary {
+  font-size: 14px;
+  height: 36px;
+  line-height: 34px;
+  padding: 0 16px;
+  font-weight: 600;
+}
+
+/* Responsive design */
+@media screen and (max-width: 782px) {
+  .form-table th {
+    width: auto;
+    padding: 10px 10px 10px 0;
+    display: block;
+  }
+
+  .form-table td {
+    padding: 10px 0;
+    display: block;
+  }
+
+  .form-table tr {
+    display: block;
+    margin-bottom: 20px;
+  }
+
+  .form-table input[type="text"],
+  .form-table input[type="number"],
+  .form-table select,
+  .form-table textarea {
+    width: 100%;
+  }
+
+  .rtp-tab-nav .nav-tab {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Enhanced visual feedback */
+.rtp-tab-content form {
+  margin: 0;
+}
+
+.rtp-sections-wrapper > p {
+  margin-bottom: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Focus states for accessibility */
+.form-table input:focus,
+.form-table select:focus,
+.form-table textarea:focus {
+  border-color: #0073aa;
+  box-shadow: 0 0 0 2px rgba(0, 115, 170, 0.2);
+  outline: none;
+}
+
+/* Checkbox styling improvements */
+.form-table td label {
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+}
+
+/* Breakpoints management styles */
+.rtp-breakpoint-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #f9f9f9;
+  border: 1px solid #e1e1e1;
+  border-radius: 4px;
+}
+
+.rtp-breakpoint-row input {
+  margin: 0;
+}
+
+.rtp-breakpoint-row .small-text {
+  width: 100px;
+}
+
+.rtp-breakpoint-row .regular-text {
+  flex: 1;
+}
+
+.rtp-breakpoint-row .button {
+  margin: 0;
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+
+.rtp-breakpoint-row .button:hover {
+  background: #c82333;
+  border-color: #bd2130;
+}
+
+/* Import/Export/Reset sections */
+.rtp-import-section,
+.rtp-export-section,
+.rtp-reset-section {
+  padding: 15px;
+  margin-bottom: 15px;
+  background: #f9f9f9;
+  border: 1px solid #e1e1e1;
+  border-radius: 4px;
+}
+
+.rtp-import-section .button,
+.rtp-export-section .button {
+  margin-right: 10px;
+}
+
+.rtp-reset-section .button {
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+
+.rtp-reset-section .button:hover {
+  background: #c82333;
+  border-color: #bd2130;
+}
+
+/* Responsive for breakpoints */
+@media screen and (max-width: 782px) {
+  .rtp-breakpoint-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rtp-breakpoint-row input {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .rtp-breakpoint-row .button {
+    width: 100%;
+  }
+}

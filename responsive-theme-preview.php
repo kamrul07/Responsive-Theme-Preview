@@ -42,6 +42,13 @@ require_once __DIR__ . '/includes/class-shortcode.php';
 require_once __DIR__ . '/includes/class-block.php';
 require_once __DIR__ . '/includes/class-advanced-settings.php';
 require_once __DIR__ . '/includes/class-admin-settings.php';
+require_once __DIR__ . '/includes/class-dashboard.php';
+
+// Initialize admin classes
+if (is_admin()) {
+	new RTP_Admin_Settings();
+	new RTP_Dashboard();
+}
 
 add_action('elementor/widgets/register', function ($widgets_manager) {
 	if (class_exists('\Elementor\Widget_Base')) {
@@ -93,7 +100,7 @@ add_action('template_redirect', function () {
 		$global_settings = RTP_Admin_Settings::get_settings();
 	} else {
 		// Fallback to default if admin settings not available
-		$global_settings = array(
+		$global_settings = class_exists('RTP_Advanced_Settings') ? RTP_Advanced_Settings::get_defaults() : array(
 			'default_breakpoints' => array(
 				array('title' => 'Desktop', 'width' => 1280, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE4IDJINmMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE2SDZWNmgxMnYxMnpNOSA4aDZ2Mkg5Vjh6bTAgNGg2djJIOXYtMnptMCA0aDZ2Mkg5di0yeiIvPjwvc3ZnPg=='),
 				array('title' => 'Tablet',  'width' => 768, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE5IDFINVYyM2gxNFYxem0wIDIySDVWM2gxNHYyMHpNOSAxOWg2djJIOXYtMnptMC0xNGg2djEwSDlWNXoiLz48L3N2Zz4='),
@@ -119,8 +126,9 @@ add_action('template_redirect', function () {
 		$global_settings = RTP_Admin_Settings::get_settings();
 	} else {
 		// Debug: Admin settings class not found, using defaults
-		$global_settings = array(
+		$global_settings = class_exists('RTP_Advanced_Settings') ? RTP_Advanced_Settings::get_defaults() : array(
 			'topbar_height' => 52,
+			'topbar_bg' => '#ffffff',
 			'device_button_active_color' => '#2563eb',
 			'device_button_hover_color' => '#1d4ed8',
 			'overlay_close_on_click' => true,
@@ -158,7 +166,7 @@ add_action('template_redirect', function () {
 
 	<body <?php body_class('rtp-preview-page'); ?>>
 		<div class="rtp-wrapper">
-			<div class="rtp-topbar" style="background:<?php echo esc_attr($topbg); ?>;height: <?php echo (int) $global_settings['topbar_height']; ?>px; ?>">
+			<div class="rtp-topbar" style="background:<?php echo esc_attr(isset($global_settings['topbar_bg']) ? $global_settings['topbar_bg'] : '#ffffff'); ?>;height: <?php echo (int) $global_settings['topbar_height']; ?>px; ">
 				<div class="rtp-topbar-title"><?php echo esc_html($title); ?></div>
 				<div class="rtp-devices">
 					<?php foreach ($bps as $bp) :

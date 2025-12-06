@@ -1,779 +1,1114 @@
 <?php
+
 if (! defined('ABSPATH')) {
     exit;
 }
 
 class RTP_Admin_Settings {
 
-    /**
-     * Settings page slug
-     */
-    const PAGE_SLUG = 'rtp-settings';
+    private $options;
+    private $settings;
 
-    /**
-     * Settings option name
-     */
-    const OPTION_NAME = 'rtp_settings';
-
-    /**
-     * Initialize the admin settings
-     */
-    public static function init() {
-        add_action('admin_menu', array(__CLASS__, 'add_menu_page'));
-        add_action('admin_init', array(__CLASS__, 'register_settings'));
-        add_action('admin_enqueue_scripts', array(__CLASS__, 'enqueue_scripts'));
+    public function __construct() {
+        add_action('admin_menu', array($this, 'add_plugin_page'));
+        add_action('admin_init', array($this, 'page_init'));
+        add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
+        add_action('admin_init', array($this, 'handle_ajax_requests'));
     }
 
-    /**
-     * Add menu page
-     */
-    public static function add_menu_page() {
-        add_submenu_page(
-            'edit.php?post_type=' . RTP_CPT::POST_TYPE,
-            __('Settings', 'responsive-theme-preview'),
-            __('Settings', 'responsive-theme-preview'),
+    public function add_plugin_page() {
+        add_menu_page(
+            'Responsive Theme Preview',
+            'Previews',
             'manage_options',
-            self::PAGE_SLUG,
-            array(__CLASS__, 'render_settings_page')
+            'rtp-previews',
+            '',
+            'dashicons-tablet',
+            30
+        );
+
+        add_submenu_page(
+            'rtp-previews',
+            'Responsive Theme Preview Settings',
+            'Settings',
+            'manage_options',
+            'rtp-settings',
+            array($this, 'create_admin_page')
         );
     }
 
-    /**
-     * Enqueue admin scripts and styles
-     */
-    public static function enqueue_scripts($hook) {
-        if (strpos($hook, self::PAGE_SLUG) === false) {
+    public function admin_scripts($hook) {
+        if ('rtp-previews_page_rtp-settings' !== $hook) {
             return;
         }
 
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
-        wp_enqueue_script('rtp-admin-settings', RTP_URL . 'assets/js/admin-settings.js', array('jquery'), RTP_VER, true);
+        wp_enqueue_style('rtp-admin-styles', plugin_dir_url(dirname(__FILE__)) . 'assets/css/admin-styles.css', array(), '1.0');
+        wp_enqueue_script('rtp-admin-settings', plugin_dir_url(dirname(__FILE__)) . 'assets/js/admin-settings.js', array('jquery', 'wp-color-picker'), '1.0', true);
 
-        // Enqueue Themify Icons for admin settings
-        wp_enqueue_style('rtp-themify-icons', 'https://cdn.jsdelivr.net/npm/themify-icons@0.1.2/themify-icons.css', array(), '0.1.2');
-
-        // Pass option name to JavaScript
-        wp_localize_script('rtp-admin-settings', 'rtpSettings', array(
-            'optionName' => self::OPTION_NAME,
+        wp_localize_script('rtp-admin-settings', 'rtp_admin', array(
+            'nonce' => wp_create_nonce('rtp_admin_nonce'),
+            'ajaxurl' => admin_url('admin-ajax.php')
         ));
-
-        // Add custom admin styles
-        wp_add_inline_style('wp-color-picker', '
-   .rtp-settings-section {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    margin: 20px 0;
-    padding: 20px;
-   }
-   .rtp-settings-section h3 {
-    margin-top: 0;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-   }
-   .rtp-settings-field {
-    margin-bottom: 15px;
-   }
-   .rtp-settings-field label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 5px;
-   }
-   .rtp-settings-field .description {
-    font-size: 12px;
-    color: #666;
-    font-style: italic;
-    margin-top: 5px;
-   }
-   .rtp-settings-checkbox {
-    margin-right: 8px;
-   }
-   .rtp-settings-tabs {
-    margin-bottom: 20px;
-   }
-   .rtp-settings-tabs .nav-tab {
-    margin-right: 5px;
-   }
-   .rtp-tab-content {
-    display: none;
-   }
-   .rtp-tab-content.active {
-    display: block;
-   }
-   .rtp-color-picker {
-    width: 80px;
-   }
-   .rtp-number-field {
-    width: 80px;
-   }
-   .rtp-breakpoint-item {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
-    margin-bottom: 15px;
-    background: #f9f9f9;
-   }
-   .rtp-breakpoint-fields {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-   }
-   .rtp-field-row {
-    flex: 1;
-    min-width: 200px;
-   }
-   .rtp-field-row label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 5px;
-   }
-   .rtp-field-row input {
-    width: 100%;
-   }
-   .rtp-breakpoint-actions {
-   	margin-top: 10px;
-   	text-align: right;
-   }
-   .rtp-media-uploader {
-   	position: relative;
-   	display: flex;
-   	align-items: center;
-   	gap: 10px;
-   }
-   .rtp-media-input {
-   	flex: 1;
-   }
-   .rtp-media-upload-button {
-   	flex-shrink: 0;
-   }
-   .rtp-media-preview {
-   	flex-shrink: 0;
-   }
-   .rtp-icon-picker-modal {
-   	display: none;
-   	position: fixed;
-   	top: 0;
-   	left: 0;
-   	width: 100%;
-   	height: 100%;
-   	background: rgba(0, 0, 0, 0.5);
-   	z-index: 100000;
-   }
-   .rtp-icon-picker-content {
-   	position: absolute;
-   	top: 50%;
-   	left: 50%;
-   	transform: translate(-50%, -50%);
-   	background: #fff;
-   	padding: 20px;
-   	border-radius: 5px;
-   	width: 80%;
-   	max-width: 600px;
-   	max-height: 80%;
-   	overflow-y: auto;
-   }
-   .rtp-icon-picker-header {
-   	display: flex;
-   	justify-content: space-between;
-   	align-items: center;
-   	margin-bottom: 20px;
-   	padding-bottom: 10px;
-   	border-bottom: 1px solid #eee;
-   }
-   .rtp-icon-picker-search {
-   	width: 100%;
-   	padding: 8px;
-   	margin-bottom: 20px;
-   	border: 1px solid #ddd;
-   	border-radius: 4px;
-   }
-   .rtp-icon-grid {
-   	display: grid;
-   	grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-   	gap: 10px;
-   }
-   .rtp-icon-item {
-   	display: flex;
-   	flex-direction: column;
-   	align-items: center;
-   	justify-content: center;
-   	padding: 10px;
-   	border: 1px solid #ddd;
-   	border-radius: 4px;
-   	cursor: pointer;
-   	height: 60px;
-   	font-size: 10px;
-   }
-   .rtp-icon-item i {
-   	font-size: 20px;
-   	margin-bottom: 5px;
-   }
-   .rtp-icon-item span {
-   	text-align: center;
-   	word-break: break-all;
-   	line-height: 1;
-   }
-   .rtp-icon-item:hover {
-   	background: #f0f0f0;
-   	border-color: #0073aa;
-   }
-   .rtp-icon-item.selected {
-   	background: #0073aa;
-   	color: white;
-   	border-color: #0073aa;
-   }
-  ');
-
-        // Add custom admin script
-        wp_add_inline_script('wp-color-picker', '
-            jQuery(document).ready(function($) {
-                // Initialize color pickers
-                $(".rtp-color-picker").wpColorPicker();
-                
-                // Tab functionality
-                $(".rtp-settings-tabs .nav-tab").click(function(e) {
-                    e.preventDefault();
-                    var tab = $(this).data("tab");
-                    
-                    $(".rtp-settings-tabs .nav-tab").removeClass("nav-tab-active");
-                    $(this).addClass("nav-tab-active");
-                    
-                    $(".rtp-tab-content").removeClass("active");
-                    $("#" + tab).addClass("active");
-                });
-                
-                // Activate first tab by default
-                $(".rtp-settings-tabs .nav-tab:first").click();
-            });
-        ');
     }
 
+    public function create_admin_page() {
+        $this->options = get_option('rtp_settings');
 
-    /**
-     * Register settings
-     */
-    public static function register_settings() {
-        register_setting(self::OPTION_NAME, self::OPTION_NAME, array(__CLASS__, 'sanitize_settings'));
+        // Handle success/error messages
+        $message = '';
+        if (isset($_GET['rtp-message'])) {
+            $message = sanitize_text_field($_GET['rtp-message']);
+            $type = isset($_GET['rtp-type']) ? sanitize_text_field($_GET['rtp-type']) : 'success';
+        }
+?>
+<div class="wrap rtp-settings-wrap">
+    <h1>Responsive Theme Preview Settings</h1>
+
+    <?php if ($message): ?>
+    <div class="notice notice-<?php echo esc_attr($type); ?> is-dismissible">
+        <p><?php echo esc_html($message); ?></p>
+    </div>
+    <?php endif; ?>
+
+    <!-- WordPress-style Tab Navigation -->
+    <nav class="nav-tab-wrapper rtp-tab-nav">
+        <a href="#general" data-tab="general" class="nav-tab nav-tab-active">General</a>
+        <a href="#breakpoints" data-tab="breakpoints" class="nav-tab">Breakpoints</a>
+        <a href="#appearance" data-tab="appearance" class="nav-tab">Appearance</a>
+        <a href="#overlay" data-tab="overlay" class="nav-tab">Overlay</a>
+        <a href="#preview" data-tab="preview" class="nav-tab">Preview</a>
+        <a href="#performance" data-tab="performance" class="nav-tab">Performance</a>
+        <a href="#accessibility" data-tab="accessibility" class="nav-tab">Accessibility</a>
+        <a href="#import-export" data-tab="import-export" class="nav-tab">Import/Export</a>
+        <a href="#custom" data-tab="custom" class="nav-tab">Custom</a>
+    </nav>
+
+    <form method="post" action="options.php">
+        <?php settings_fields('rtp_settings_group'); ?>
+        <div class="rtp-tab-content-container">
+            <!-- General Tab -->
+            <div id="general" class="rtp-tab-content active">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_general_section'); ?>
+                </div>
+            </div>
+
+            <!-- Breakpoints Tab -->
+            <div id="breakpoints" class="rtp-tab-content">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_breakpoints_section'); ?>
+                </div>
+            </div>
+
+            <!-- Appearance Tab -->
+            <div id="appearance" class="rtp-tab-content">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_appearance_section'); ?>
+                </div>
+            </div>
+
+            <!-- Overlay Tab -->
+            <div id="overlay" class="rtp-tab-content">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_overlay_section'); ?>
+                </div>
+            </div>
+
+            <!-- Preview Tab -->
+            <div id="preview" class="rtp-tab-content">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_preview_section'); ?>
+                </div>
+            </div>
+
+            <!-- Performance Tab -->
+            <div id="performance" class="rtp-tab-content">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_performance_section'); ?>
+                </div>
+            </div>
+
+            <!-- Accessibility Tab -->
+            <div id="accessibility" class="rtp-tab-content">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_accessibility_section'); ?>
+                </div>
+            </div>
+
+            <!-- Import/Export Tab -->
+            <div id="import-export" class="rtp-tab-content">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_import_export_section'); ?>
+                </div>
+            </div>
+
+            <!-- Custom Tab -->
+            <div id="custom" class="rtp-tab-content">
+                <div class="rtp-sections-wrapper">
+                    <?php $this->render_settings_section('rtp_custom_section'); ?>
+                </div>
+            </div>
+        </div>
+        <?php submit_button('Save Settings', 'primary', 'submit', true, array('id' => 'rtp-submit')); ?>
+    </form>
+</div>
+<?php
     }
 
     /**
-     * Sanitize settings
+     * Render a specific settings section
      */
-    public static function sanitize_settings($settings) {
-        if (! is_array($settings)) {
-            return array();
+    private function render_settings_section($section_id) {
+        global $wp_settings_sections;
+        global $wp_settings_fields;
+
+        if (!isset($wp_settings_sections[$section_id])) {
+            return;
         }
 
-        $defaults = RTP_Advanced_Settings::get_defaults();
+        $section = $wp_settings_sections[$section_id];
+
+        // Add section title
+        echo '<h2>' . $section['title'] . '</h2>';
+
+        if (!empty($section['callback'])) {
+            call_user_func($section['callback'], $section);
+        }
+
+        // Render fields for this section only
+        if (isset($wp_settings_fields[$section_id])) {
+            echo '<table class="form-table" role="presentation">';
+            foreach ($wp_settings_fields[$section_id] as $field) {
+                echo '<tr>';
+                echo '<th scope="row">' . $field['title'] . '</th>';
+                echo '<td>';
+                call_user_func($field['callback'], $field['args']);
+                echo '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+    }
+
+    public function page_init() {
+        register_setting(
+            'rtp_settings_group',
+            'rtp_settings',
+            array($this, 'sanitize_settings')
+        );
+
+        // General Settings Tab
+        add_settings_section(
+            'rtp_general_section',
+            'General Settings',
+            array($this, 'print_section_info'),
+            'rtp-settings'
+        );
+
+        add_settings_field(
+            'topbar_height',
+            'Topbar Height',
+            array($this, 'topbar_height_callback'),
+            'rtp-settings',
+            'rtp_general_section'
+        );
+
+        // Appearance Settings Tab
+        add_settings_section(
+            'rtp_appearance_section',
+            'Appearance Settings',
+            array($this, 'print_appearance_info'),
+            'rtp-settings'
+        );
+
+        add_settings_field(
+            'device_button_style',
+            'Device Button Style',
+            array($this, 'device_button_style_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'device_button_size',
+            'Device Button Size',
+            array($this, 'device_button_size_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'device_button_active_color',
+            'Device Button Active Color',
+            array($this, 'device_button_active_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'device_button_hover_color',
+            'Device Button Hover Color',
+            array($this, 'device_button_hover_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        // Topbar Settings
+        add_settings_field(
+            'topbar_bg',
+            'Topbar Background Color',
+            array($this, 'topbar_bg_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'topbar_title_size',
+            'Topbar Title Font Size',
+            array($this, 'topbar_title_size_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'topbar_title_color',
+            'Topbar Title Font Color',
+            array($this, 'topbar_title_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'topbar_button_color',
+            'Topbar Button Color',
+            array($this, 'topbar_button_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'topbar_button_bg',
+            'Topbar Button Background',
+            array($this, 'topbar_button_bg_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'topbar_button_font_size',
+            'Topbar Button Font Size',
+            array($this, 'topbar_button_font_size_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'topbar_button_border_radius',
+            'Topbar Button Border Radius',
+            array($this, 'topbar_button_border_radius_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'topbar_button_padding',
+            'Topbar Button Padding',
+            array($this, 'topbar_button_padding_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'overlay_bg_color',
+            'Overlay Background Color',
+            array($this, 'overlay_bg_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'overlay_border_color',
+            'Overlay Border Color',
+            array($this, 'overlay_border_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'frame_border_color',
+            'Preview Frame Border Color',
+            array($this, 'frame_border_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'frame_shadow_color',
+            'Preview Frame Shadow Color',
+            array($this, 'frame_shadow_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'cta_button_color',
+            'CTA Button Text Color',
+            array($this, 'cta_button_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'cta_button_bg_color',
+            'CTA Button Background Color',
+            array($this, 'cta_button_bg_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'cta_button_hover_color',
+            'CTA Button Hover Color',
+            array($this, 'cta_button_hover_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'device_button_text_color',
+            'Device Button Text Color',
+            array($this, 'device_button_text_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        add_settings_field(
+            'device_button_bg_color',
+            'Device Button Background Color',
+            array($this, 'device_button_bg_color_callback'),
+            'rtp-settings',
+            'rtp_appearance_section'
+        );
+
+        // Overlay Settings Tab
+        add_settings_section(
+            'rtp_overlay_section',
+            'Overlay Settings',
+            array($this, 'print_overlay_info'),
+            'rtp-settings'
+        );
+
+        add_settings_field(
+            'overlay_close_on_click',
+            'Close on Click',
+            array($this, 'overlay_close_on_click_callback'),
+            'rtp-settings',
+            'rtp_overlay_section'
+        );
+
+        add_settings_field(
+            'overlay_close_on_esc',
+            'Close on ESC',
+            array($this, 'overlay_close_on_esc_callback'),
+            'rtp-settings',
+            'rtp_overlay_section'
+        );
+
+        add_settings_field(
+            'overlay_loading_indicator',
+            'Show Loading Indicator',
+            array($this, 'overlay_loading_indicator_callback'),
+            'rtp-settings',
+            'rtp_overlay_section'
+        );
+
+        add_settings_field(
+            'overlay_loading_color',
+            'Loading Indicator Color',
+            array($this, 'overlay_loading_color_callback'),
+            'rtp-settings',
+            'rtp_overlay_section'
+        );
+
+        // Preview Settings Tab
+        add_settings_section(
+            'rtp_preview_section',
+            'Preview Settings',
+            array($this, 'print_preview_info'),
+            'rtp-settings'
+        );
+
+        add_settings_field(
+            'preview_start_with_device',
+            'Start with Device',
+            array($this, 'preview_start_with_device_callback'),
+            'rtp-settings',
+            'rtp_preview_section'
+        );
+
+        add_settings_field(
+            'preview_zoom_level',
+            'Default Zoom Level',
+            array($this, 'preview_zoom_level_callback'),
+            'rtp-settings',
+            'rtp_preview_section'
+        );
+
+        add_settings_field(
+            'preview_allow_zoom',
+            'Allow Zoom',
+            array($this, 'preview_allow_zoom_callback'),
+            'rtp-settings',
+            'rtp_preview_section'
+        );
+
+        // Performance Settings Tab
+        add_settings_section(
+            'rtp_performance_section',
+            'Performance Settings',
+            array($this, 'print_performance_info'),
+            'rtp-settings'
+        );
+
+        add_settings_field(
+            'lazy_load_preview',
+            'Lazy Load Preview',
+            array($this, 'lazy_load_preview_callback'),
+            'rtp-settings',
+            'rtp_performance_section'
+        );
+
+        add_settings_field(
+            'preload_previews',
+            'Preload Previews',
+            array($this, 'preload_previews_callback'),
+            'rtp-settings',
+            'rtp_performance_section'
+        );
+
+        add_settings_field(
+            'cache_previews',
+            'Cache Previews',
+            array($this, 'cache_previews_callback'),
+            'rtp-settings',
+            'rtp_performance_section'
+        );
+
+        add_settings_field(
+            'cache_duration',
+            'Cache Duration (seconds)',
+            array($this, 'cache_duration_callback'),
+            'rtp-settings',
+            'rtp_performance_section'
+        );
+
+        // Accessibility Settings Tab
+        add_settings_section(
+            'rtp_accessibility_section',
+            'Accessibility Settings',
+            array($this, 'print_accessibility_info'),
+            'rtp-settings'
+        );
+
+        add_settings_field(
+            'enable_keyboard_nav',
+            'Enable Keyboard Navigation',
+            array($this, 'enable_keyboard_nav_callback'),
+            'rtp-settings',
+            'rtp_accessibility_section'
+        );
+
+        add_settings_field(
+            'enable_screen_reader',
+            'Enable Screen Reader Support',
+            array($this, 'enable_screen_reader_callback'),
+            'rtp-settings',
+            'rtp_accessibility_section'
+        );
+
+        add_settings_field(
+            'focus_outline',
+            'Show Focus Outline',
+            array($this, 'focus_outline_callback'),
+            'rtp-settings',
+            'rtp_accessibility_section'
+        );
+
+        add_settings_field(
+            'focus_outline_color',
+            'Focus Outline Color',
+            array($this, 'focus_outline_color_callback'),
+            'rtp-settings',
+            'rtp_accessibility_section'
+        );
+
+        add_settings_field(
+            'focus_outline_width',
+            'Focus Outline Width',
+            array($this, 'focus_outline_width_callback'),
+            'rtp-settings',
+            'rtp_accessibility_section'
+        );
+
+        // Custom CSS/JS Tab
+        add_settings_section(
+            'rtp_custom_section',
+            'Custom CSS/JS',
+            array($this, 'print_custom_info'),
+            'rtp-settings'
+        );
+
+        add_settings_field(
+            'custom_css',
+            'Custom CSS',
+            array($this, 'custom_css_callback'),
+            'rtp-settings',
+            'rtp_custom_section'
+        );
+
+        add_settings_field(
+            'custom_js',
+            'Custom JavaScript',
+            array($this, 'custom_js_callback'),
+            'rtp-settings',
+            'rtp_custom_section'
+        );
+    }
+
+    // Section info callbacks
+    public function print_section_info() {
+        print 'Configure general settings for responsive theme preview:';
+    }
+
+    public function print_appearance_info() {
+        print 'Configure appearance settings for responsive theme preview:';
+    }
+
+    public function print_overlay_info() {
+        print 'Configure overlay behavior and appearance:';
+    }
+
+    public function print_preview_info() {
+        print 'Configure preview functionality:';
+    }
+
+    public function print_performance_info() {
+        print 'Configure performance-related settings:';
+    }
+
+    public function print_accessibility_info() {
+        print 'Configure accessibility features:';
+    }
+
+    public function print_custom_info() {
+        print 'Add custom CSS and JavaScript:';
+    }
+
+    // Field callbacks for General Settings
+    public function topbar_height_callback() {
+        $value = isset($this->options['topbar_height']) ? $this->options['topbar_height'] : '52';
+        echo "<input type='number' id='topbar_height' name='rtp_settings[topbar_height]' value='" . esc_attr($value) . "' min='30' max='100' />";
+        echo "<p class='description'>Enter the height of the topbar in pixels (default: 52)</p>";
+    }
+
+    // Field callbacks for Appearance Settings
+    public function device_button_style_callback() {
+        $value = isset($this->options['device_button_style']) ? $this->options['device_button_style'] : 'default';
+        $options = array(
+            'default' => 'Default',
+            'rounded' => 'Rounded',
+            'square' => 'Square'
+        );
+
+        echo "<select id='device_button_style' name='rtp_settings[device_button_style]'>";
+        foreach ($options as $key => $label) {
+            echo "<option value='" . esc_attr($key) . "' " . selected($value, $key, false) . ">" . esc_html($label) . "</option>";
+        }
+        echo "</select>";
+        echo "<p class='description'>Choose the style for device buttons</p>";
+    }
+
+    public function device_button_size_callback() {
+        $value = isset($this->options['device_button_size']) ? $this->options['device_button_size'] : 'medium';
+        $options = array(
+            'small' => 'Small',
+            'medium' => 'Medium',
+            'large' => 'Large'
+        );
+
+        echo "<select id='device_button_size' name='rtp_settings[device_button_size]'>";
+        foreach ($options as $key => $label) {
+            echo "<option value='" . esc_attr($key) . "' " . selected($value, $key, false) . ">" . esc_html($label) . "</option>";
+        }
+        echo "</select>";
+        echo "<p class='description'>Choose the size for device buttons</p>";
+    }
+
+    public function device_button_active_color_callback() {
+        $value = isset($this->options['device_button_active_color']) ? $this->options['device_button_active_color'] : '#2563eb';
+        echo "<input type='text' id='device_button_active_color' name='rtp_settings[device_button_active_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the active color for device buttons</p>";
+    }
+
+    public function device_button_hover_color_callback() {
+        $value = isset($this->options['device_button_hover_color']) ? $this->options['device_button_hover_color'] : '#1d4ed8';
+        echo "<input type='text' id='device_button_hover_color' name='rtp_settings[device_button_hover_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the hover color for device buttons</p>";
+    }
+
+    public function topbar_bg_callback() {
+        $value = isset($this->options['topbar_bg']) ? $this->options['topbar_bg'] : '#ffffff';
+        echo "<input type='text' id='topbar_bg' name='rtp_settings[topbar_bg]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the background color for the topbar</p>";
+    }
+
+    public function topbar_title_size_callback() {
+        $value = isset($this->options['topbar_title_size']) ? $this->options['topbar_title_size'] : '16';
+        echo "<input type='number' id='topbar_title_size' name='rtp_settings[topbar_title_size]' value='" . esc_attr($value) . "' min='10' max='30' />";
+        echo "<p class='description'>Enter the font size for the topbar title in pixels (default: 16)</p>";
+    }
+
+    public function topbar_title_color_callback() {
+        $value = isset($this->options['topbar_title_color']) ? $this->options['topbar_title_color'] : '#333333';
+        echo "<input type='text' id='topbar_title_color' name='rtp_settings[topbar_title_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the font color for the topbar title</p>";
+    }
+
+    public function topbar_button_color_callback() {
+        $value = isset($this->options['topbar_button_color']) ? $this->options['topbar_button_color'] : '#2563eb';
+        echo "<input type='text' id='topbar_button_color' name='rtp_settings[topbar_button_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the font color for the topbar button</p>";
+    }
+
+    public function topbar_button_bg_callback() {
+        $value = isset($this->options['topbar_button_bg']) ? $this->options['topbar_button_bg'] : '#ffffff';
+        echo "<input type='text' id='topbar_button_bg' name='rtp_settings[topbar_button_bg]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the background color for the topbar button</p>";
+    }
+
+    public function topbar_button_font_size_callback() {
+        $value = isset($this->options['topbar_button_font_size']) ? $this->options['topbar_button_font_size'] : '14';
+        echo "<input type='number' id='topbar_button_font_size' name='rtp_settings[topbar_button_font_size]' value='" . esc_attr($value) . "' min='10' max='24' />";
+        echo "<p class='description'>Enter the font size for the topbar button in pixels (default: 14)</p>";
+    }
+
+    public function topbar_button_border_radius_callback() {
+        $value = isset($this->options['topbar_button_border_radius']) ? $this->options['topbar_button_border_radius'] : '4';
+        echo "<input type='number' id='topbar_button_border_radius' name='rtp_settings[topbar_button_border_radius]' value='" . esc_attr($value) . "' min='0' max='50' />";
+        echo "<p class='description'>Enter the border radius for the topbar button in pixels (default: 4)</p>";
+    }
+
+    public function topbar_button_padding_callback() {
+        $top = isset($this->options['topbar_button_padding_top']) ? $this->options['topbar_button_padding_top'] : '8';
+        $right = isset($this->options['topbar_button_padding_right']) ? $this->options['topbar_button_padding_right'] : '16';
+        $bottom = isset($this->options['topbar_button_padding_bottom']) ? $this->options['topbar_button_padding_bottom'] : '8';
+        $left = isset($this->options['topbar_button_padding_left']) ? $this->options['topbar_button_padding_left'] : '16';
+
+        echo "<div style='display: flex; gap: 10px; align-items: center;'>";
+        echo "<label>Top: <input type='number' name='rtp_settings[topbar_button_padding_top]' value='" . esc_attr($top) . "' min='0' max='50' style='width: 60px;' /></label>";
+        echo "<label>Right: <input type='number' name='rtp_settings[topbar_button_padding_right]' value='" . esc_attr($right) . "' min='0' max='50' style='width: 60px;' /></label>";
+        echo "<label>Bottom: <input type='number' name='rtp_settings[topbar_button_padding_bottom]' value='" . esc_attr($bottom) . "' min='0' max='50' style='width: 60px;' /></label>";
+        echo "<label>Left: <input type='number' name='rtp_settings[topbar_button_padding_left]' value='" . esc_attr($left) . "' min='0' max='50' style='width: 60px;' /></label>";
+        echo "</div>";
+        echo "<p class='description'>Enter the padding for the topbar button in pixels (default: 8 16 8 16)</p>";
+    }
+
+    public function overlay_bg_color_callback() {
+        $value = isset($this->options['overlay_bg_color']) ? $this->options['overlay_bg_color'] : '#000000';
+        echo "<input type='text' id='overlay_bg_color' name='rtp_settings[overlay_bg_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the background color for the overlay</p>";
+    }
+
+    public function overlay_border_color_callback() {
+        $value = isset($this->options['overlay_border_color']) ? $this->options['overlay_border_color'] : '#cccccc';
+        echo "<input type='text' id='overlay_border_color' name='rtp_settings[overlay_border_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the border color for the overlay</p>";
+    }
+
+    public function frame_border_color_callback() {
+        $value = isset($this->options['frame_border_color']) ? $this->options['frame_border_color'] : '#dddddd';
+        echo "<input type='text' id='frame_border_color' name='rtp_settings[frame_border_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the border color for the preview frame</p>";
+    }
+
+    public function frame_shadow_color_callback() {
+        $value = isset($this->options['frame_shadow_color']) ? $this->options['frame_shadow_color'] : 'rgba(0, 0, 0, 0.2)';
+        echo "<input type='text' id='frame_shadow_color' name='rtp_settings[frame_shadow_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the shadow color for the preview frame</p>";
+    }
+
+    public function cta_button_color_callback() {
+        $value = isset($this->options['cta_button_color']) ? $this->options['cta_button_color'] : '#ffffff';
+        echo "<input type='text' id='cta_button_color' name='rtp_settings[cta_button_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the text color for the CTA button</p>";
+    }
+
+    public function cta_button_bg_color_callback() {
+        $value = isset($this->options['cta_button_bg_color']) ? $this->options['cta_button_bg_color'] : '#2563eb';
+        echo "<input type='text' id='cta_button_bg_color' name='rtp_settings[cta_button_bg_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the background color for the CTA button</p>";
+    }
+
+    public function cta_button_hover_color_callback() {
+        $value = isset($this->options['cta_button_hover_color']) ? $this->options['cta_button_hover_color'] : '#1d4ed8';
+        echo "<input type='text' id='cta_button_hover_color' name='rtp_settings[cta_button_hover_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the hover color for the CTA button</p>";
+    }
+
+    public function device_button_text_color_callback() {
+        $value = isset($this->options['device_button_text_color']) ? $this->options['device_button_text_color'] : '#333333';
+        echo "<input type='text' id='device_button_text_color' name='rtp_settings[device_button_text_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the text color for device buttons</p>";
+    }
+
+    public function device_button_bg_color_callback() {
+        $value = isset($this->options['device_button_bg_color']) ? $this->options['device_button_bg_color'] : '#f5f5f5';
+        echo "<input type='text' id='device_button_bg_color' name='rtp_settings[device_button_bg_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the background color for device buttons</p>";
+    }
+
+    // Field callbacks for Overlay Settings
+    public function overlay_close_on_click_callback() {
+        $checked = isset($this->options['overlay_close_on_click']) && $this->options['overlay_close_on_click'] ? 'checked' : '';
+        echo "<input type='checkbox' id='overlay_close_on_click' name='rtp_settings[overlay_close_on_click]' value='1' " . $checked . " />";
+        echo "<p class='description'>Close overlay when clicking outside of preview</p>";
+    }
+
+    public function overlay_close_on_esc_callback() {
+        $checked = isset($this->options['overlay_close_on_esc']) && $this->options['overlay_close_on_esc'] ? 'checked' : '';
+        echo "<input type='checkbox' id='overlay_close_on_esc' name='rtp_settings[overlay_close_on_esc]' value='1' " . $checked . " />";
+        echo "<p class='description'>Close overlay when pressing ESC key</p>";
+    }
+
+    public function overlay_loading_indicator_callback() {
+        $checked = isset($this->options['overlay_loading_indicator']) && $this->options['overlay_loading_indicator'] ? 'checked' : '';
+        echo "<input type='checkbox' id='overlay_loading_indicator' name='rtp_settings[overlay_loading_indicator]' value='1' " . $checked . " />";
+        echo "<p class='description'>Show loading indicator while preview loads</p>";
+    }
+
+    public function overlay_loading_color_callback() {
+        $value = isset($this->options['overlay_loading_color']) ? $this->options['overlay_loading_color'] : '#2563eb';
+        echo "<input type='text' id='overlay_loading_color' name='rtp_settings[overlay_loading_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the color for the loading indicator</p>";
+    }
+
+    // Field callbacks for Preview Settings
+    public function preview_start_with_device_callback() {
+        $value = isset($this->options['preview_start_with_device']) ? $this->options['preview_start_with_device'] : 'desktop';
+        $options = array(
+            'desktop' => 'Desktop',
+            'tablet' => 'Tablet',
+            'mobile' => 'Mobile'
+        );
+
+        echo "<select id='preview_start_with_device' name='rtp_settings[preview_start_with_device]'>";
+        foreach ($options as $key => $label) {
+            echo "<option value='" . esc_attr($key) . "' " . selected($value, $key, false) . ">" . esc_html($label) . "</option>";
+        }
+        echo "</select>";
+        echo "<p class='description'>Choose the default device to start with</p>";
+    }
+
+    public function preview_zoom_level_callback() {
+        $value = isset($this->options['preview_zoom_level']) ? $this->options['preview_zoom_level'] : '1.0';
+        echo "<input type='number' id='preview_zoom_level' name='rtp_settings[preview_zoom_level]' value='" . esc_attr($value) . "' min='0.5' max='2.0' step='0.1' />";
+        echo "<p class='description'>Enter the default zoom level (0.5 - 2.0, default: 1.0)</p>";
+    }
+
+    public function preview_allow_zoom_callback() {
+        $checked = isset($this->options['preview_allow_zoom']) && $this->options['preview_allow_zoom'] ? 'checked' : '';
+        echo "<input type='checkbox' id='preview_allow_zoom' name='rtp_settings[preview_allow_zoom]' value='1' " . $checked . " />";
+        echo "<p class='description'>Allow users to zoom in/out of the preview</p>";
+    }
+
+    // Field callbacks for Performance Settings
+    public function lazy_load_preview_callback() {
+        $checked = isset($this->options['lazy_load_preview']) && $this->options['lazy_load_preview'] ? 'checked' : '';
+        echo "<input type='checkbox' id='lazy_load_preview' name='rtp_settings[lazy_load_preview]' value='1' " . $checked . " />";
+        echo "<p class='description'>Load preview content only when needed</p>";
+    }
+
+    public function preload_previews_callback() {
+        $checked = isset($this->options['preload_previews']) && $this->options['preload_previews'] ? 'checked' : '';
+        echo "<input type='checkbox' id='preload_previews' name='rtp_settings[preload_previews]' value='1' " . $checked . " />";
+        echo "<p class='description'>Preload preview content for faster access</p>";
+    }
+
+    public function cache_previews_callback() {
+        $checked = isset($this->options['cache_previews']) && $this->options['cache_previews'] ? 'checked' : '';
+        echo "<input type='checkbox' id='cache_previews' name='rtp_settings[cache_previews]' value='1' " . $checked . " />";
+        echo "<p class='description'>Cache preview content for better performance</p>";
+    }
+
+    public function cache_duration_callback() {
+        $value = isset($this->options['cache_duration']) ? $this->options['cache_duration'] : '3600';
+        echo "<input type='number' id='cache_duration' name='rtp_settings[cache_duration]' value='" . esc_attr($value) . "' min='60' max='86400' />";
+        echo "<p class='description'>Cache duration in seconds (default: 3600 = 1 hour)</p>";
+    }
+
+    // Field callbacks for Accessibility Settings
+    public function enable_keyboard_nav_callback() {
+        $checked = isset($this->options['enable_keyboard_nav']) && $this->options['enable_keyboard_nav'] ? 'checked' : '';
+        echo "<input type='checkbox' id='enable_keyboard_nav' name='rtp_settings[enable_keyboard_nav]' value='1' " . $checked . " />";
+        echo "<p class='description'>Enable keyboard navigation for the preview</p>";
+    }
+
+    public function enable_screen_reader_callback() {
+        $checked = isset($this->options['enable_screen_reader']) && $this->options['enable_screen_reader'] ? 'checked' : '';
+        echo "<input type='checkbox' id='enable_screen_reader' name='rtp_settings[enable_screen_reader]' value='1' " . $checked . " />";
+        echo "<p class='description'>Enable screen reader support</p>";
+    }
+
+    public function focus_outline_callback() {
+        $checked = isset($this->options['focus_outline']) && $this->options['focus_outline'] ? 'checked' : '';
+        echo "<input type='checkbox' id='focus_outline' name='rtp_settings[focus_outline]' value='1' " . $checked . " />";
+        echo "<p class='description'>Show focus outline for better accessibility</p>";
+    }
+
+    public function focus_outline_color_callback() {
+        $value = isset($this->options['focus_outline_color']) ? $this->options['focus_outline_color'] : '#2563eb';
+        echo "<input type='text' id='focus_outline_color' name='rtp_settings[focus_outline_color]' value='" . esc_attr($value) . "' class='rtp-color-picker' />";
+        echo "<p class='description'>Choose the color for focus outlines</p>";
+    }
+
+    public function focus_outline_width_callback() {
+        $value = isset($this->options['focus_outline_width']) ? $this->options['focus_outline_width'] : '2';
+        echo "<input type='number' id='focus_outline_width' name='rtp_settings[focus_outline_width]' value='" . esc_attr($value) . "' min='1' max='10' />";
+        echo "<p class='description'>Enter the width for focus outlines in pixels (default: 2)</p>";
+    }
+
+    // Field callbacks for Custom CSS/JS
+    public function custom_css_callback() {
+        $value = isset($this->options['custom_css']) ? $this->options['custom_css'] : '';
+        echo "<textarea id='custom_css' name='rtp_settings[custom_css]' rows='10' style='width: 100%;'>" . esc_textarea($value) . "</textarea>";
+        echo "<p class='description'>Add custom CSS to override default styles</p>";
+    }
+
+    public function custom_js_callback() {
+        $value = isset($this->options['custom_js']) ? $this->options['custom_js'] : '';
+        echo "<textarea id='custom_js' name='rtp_settings[custom_js]' rows='10' style='width: 100%;'>" . esc_textarea($value) . "</textarea>";
+        echo "<p class='description'>Add custom JavaScript for additional functionality</p>";
+    }
+
+    public function sanitize_settings($input) {
         $sanitized = array();
 
-        foreach ($defaults as $key => $default) {
-            $value = isset($settings[$key]) ? $settings[$key] : $default;
+        // Topbar height
+        if (isset($input['topbar_height'])) {
+            $sanitized['topbar_height'] = absint($input['topbar_height']);
+        }
 
-            switch ($key) {
-                // Boolean values
-                case 'enable_animation':
-                case 'frame_border':
-                case 'frame_shadow':
-                case 'topbar_sticky':
-                case 'topbar_hide_on_scroll':
-                case 'overlay_close_on_click':
-                case 'overlay_close_on_esc':
-                case 'overlay_loading_indicator':
-                case 'preview_allow_zoom':
-                case 'lazy_load_preview':
-                case 'preload_previews':
-                case 'cache_previews':
-                case 'enable_keyboard_nav':
-                case 'enable_screen_reader':
-                case 'focus_outline':
-                case 'debug_mode':
-                case 'log_events':
-                    $sanitized[$key] = (bool) $value;
-                    break;
+        // Device button settings
+        if (isset($input['device_button_style'])) {
+            $sanitized['device_button_style'] = in_array($input['device_button_style'], array('default', 'rounded', 'square')) ? $input['device_button_style'] : 'default';
+        }
 
-                // Integer values
-                case 'animation_duration':
-                case 'frame_border_width':
-                case 'frame_border_radius':
-                case 'frame_shadow_blur':
-                case 'frame_shadow_offset':
-                case 'topbar_height':
-                case 'topbar_title_size':
-                case 'cache_duration':
-                case 'focus_outline_width':
-                    $sanitized[$key] = (int) $value;
-                    break;
+        if (isset($input['device_button_size'])) {
+            $sanitized['device_button_size'] = in_array($input['device_button_size'], array('small', 'medium', 'large')) ? $input['device_button_size'] : 'medium';
+        }
 
-                // Float values
-                case 'preview_zoom_level':
-                    $sanitized[$key] = (float) $value;
-                    break;
+        if (isset($input['device_button_active_color'])) {
+            $sanitized['device_button_active_color'] = sanitize_hex_color($input['device_button_active_color']);
+        }
 
-                // Color values
-                case 'frame_border_color':
-                case 'frame_shadow_color':
-                case 'device_button_active_color':
-                case 'device_button_hover_color':
-                case 'overlay_loading_color':
-                case 'focus_outline_color':
-                    $sanitized[$key] = sanitize_hex_color($value);
-                    break;
+        if (isset($input['device_button_hover_color'])) {
+            $sanitized['device_button_hover_color'] = sanitize_hex_color($input['device_button_hover_color']);
+        }
 
-                // Text values with specific options
-                case 'animation_easing':
-                    $sanitized[$key] = in_array($value, array('ease', 'ease-in', 'ease-out', 'ease-in-out', 'linear')) ? $value : $default;
-                    break;
+        // Topbar settings
+        if (isset($input['topbar_bg'])) {
+            $sanitized['topbar_bg'] = sanitize_hex_color($input['topbar_bg']);
+        }
 
-                case 'device_button_style':
-                    $sanitized[$key] = in_array($value, array('default', 'rounded', 'square')) ? $value : $default;
-                    break;
+        if (isset($input['topbar_title_size'])) {
+            $sanitized['topbar_title_size'] = absint($input['topbar_title_size']);
+        }
 
-                case 'device_button_size':
-                    $sanitized[$key] = in_array($value, array('small', 'medium', 'large')) ? $value : $default;
-                    break;
+        if (isset($input['topbar_title_color'])) {
+            $sanitized['topbar_title_color'] = sanitize_hex_color($input['topbar_title_color']);
+        }
 
-                case 'preview_start_with_device':
-                    $sanitized[$key] = in_array($value, array('desktop', 'tablet', 'mobile')) ? $value : $default;
-                    break;
+        if (isset($input['topbar_button_color'])) {
+            $sanitized['topbar_button_color'] = sanitize_hex_color($input['topbar_button_color']);
+        }
 
-                case 'topbar_title_weight':
-                    $sanitized[$key] = in_array($value, array('100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold')) ? $value : $default;
-                    break;
+        if (isset($input['topbar_button_bg'])) {
+            $sanitized['topbar_button_bg'] = sanitize_hex_color($input['topbar_button_bg']);
+        }
 
-                case 'custom_css':
-                case 'custom_js':
-                    $sanitized[$key] = wp_kses_post($value);
-                    break;
+        if (isset($input['topbar_button_font_size'])) {
+            $sanitized['topbar_button_font_size'] = absint($input['topbar_button_font_size']);
+        }
 
-                case 'default_breakpoints':
-                    if (is_array($value)) {
-                        $sanitized[$key] = array();
-                        foreach ($value as $index => $breakpoint) {
-                            if (is_array($breakpoint)) {
-                                $sanitized[$key][$index] = array(
-                                    'title' => isset($breakpoint['title']) ? sanitize_text_field($breakpoint['title']) : '',
-                                    'width' => isset($breakpoint['width']) ? (int) $breakpoint['width'] : 1280,
-                                    'icon' => isset($breakpoint['icon']) ? sanitize_text_field($breakpoint['icon']) : '',
-                                );
-                            } else {
-                                $sanitized[$key][$index] = $default;
-                            }
-                        }
-                    } else {
-                        $sanitized[$key] = $default;
-                    }
-                    break;
+        if (isset($input['topbar_button_border_radius'])) {
+            $sanitized['topbar_button_border_radius'] = absint($input['topbar_button_border_radius']);
+        }
 
-                default:
-                    $sanitized[$key] = sanitize_text_field($value);
-                    break;
+        // Topbar button padding
+        $padding_fields = array('topbar_button_padding_top', 'topbar_button_padding_right', 'topbar_button_padding_bottom', 'topbar_button_padding_left');
+        foreach ($padding_fields as $field) {
+            if (isset($input[$field])) {
+                $sanitized[$field] = absint($input[$field]);
             }
+        }
+
+        // Additional color settings
+        if (isset($input['overlay_bg_color'])) {
+            $sanitized['overlay_bg_color'] = sanitize_hex_color($input['overlay_bg_color']);
+        }
+
+        if (isset($input['overlay_border_color'])) {
+            $sanitized['overlay_border_color'] = sanitize_hex_color($input['overlay_border_color']);
+        }
+
+        if (isset($input['frame_border_color'])) {
+            $sanitized['frame_border_color'] = sanitize_hex_color($input['frame_border_color']);
+        }
+
+        if (isset($input['frame_shadow_color'])) {
+            // Allow rgba values for shadow color
+            $sanitized['frame_shadow_color'] = preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/', $input['frame_shadow_color']) ? $input['frame_shadow_color'] : sanitize_text_field($input['frame_shadow_color']);
+        }
+
+        if (isset($input['cta_button_color'])) {
+            $sanitized['cta_button_color'] = sanitize_hex_color($input['cta_button_color']);
+        }
+
+        if (isset($input['cta_button_bg_color'])) {
+            $sanitized['cta_button_bg_color'] = sanitize_hex_color($input['cta_button_bg_color']);
+        }
+
+        if (isset($input['cta_button_hover_color'])) {
+            $sanitized['cta_button_hover_color'] = sanitize_hex_color($input['cta_button_hover_color']);
+        }
+
+        if (isset($input['device_button_text_color'])) {
+            $sanitized['device_button_text_color'] = sanitize_hex_color($input['device_button_text_color']);
+        }
+
+        if (isset($input['device_button_bg_color'])) {
+            $sanitized['device_button_bg_color'] = sanitize_hex_color($input['device_button_bg_color']);
+        }
+
+        // Overlay settings
+        $checkbox_fields = array('overlay_close_on_click', 'overlay_close_on_esc', 'overlay_loading_indicator', 'preview_allow_zoom', 'lazy_load_preview', 'preload_previews', 'cache_previews', 'enable_keyboard_nav', 'enable_screen_reader', 'focus_outline');
+        foreach ($checkbox_fields as $field) {
+            $sanitized[$field] = isset($input[$field]) ? (bool) $input[$field] : false;
+        }
+
+        if (isset($input['overlay_loading_color'])) {
+            $sanitized['overlay_loading_color'] = sanitize_hex_color($input['overlay_loading_color']);
+        }
+
+        // Preview settings
+        if (isset($input['preview_start_with_device'])) {
+            $sanitized['preview_start_with_device'] = in_array($input['preview_start_with_device'], array('desktop', 'tablet', 'mobile')) ? $input['preview_start_with_device'] : 'desktop';
+        }
+
+        if (isset($input['preview_zoom_level'])) {
+            $sanitized['preview_zoom_level'] = floatval($input['preview_zoom_level']);
+        }
+
+        // Performance settings
+        if (isset($input['cache_duration'])) {
+            $sanitized['cache_duration'] = absint($input['cache_duration']);
+        }
+
+        // Accessibility settings
+        if (isset($input['focus_outline_color'])) {
+            $sanitized['focus_outline_color'] = sanitize_hex_color($input['focus_outline_color']);
+        }
+
+        if (isset($input['focus_outline_width'])) {
+            $sanitized['focus_outline_width'] = absint($input['focus_outline_width']);
+        }
+
+        // Custom CSS/JS
+        if (isset($input['custom_css'])) {
+            $sanitized['custom_css'] = wp_kses_post($input['custom_css']);
+        }
+
+        if (isset($input['custom_js'])) {
+            $sanitized['custom_js'] = wp_kses_post($input['custom_js']);
         }
 
         return $sanitized;
     }
 
     /**
-     * Get current settings
+     * Get plugin settings from WordPress options
+     *
+     * @return array Plugin settings
      */
     public static function get_settings() {
-        $settings = get_option(self::OPTION_NAME, array());
-        return wp_parse_args($settings, RTP_Advanced_Settings::get_defaults());
+        $defaults = RTP_Advanced_Settings::get_defaults();
+        $saved = get_option('rtp_settings', array());
+        return wp_parse_args($saved, $defaults);
     }
 
-    /**
-     * Render settings page
-     */
-    public static function render_settings_page() {
-        $settings = self::get_settings();
-        $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
-?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Responsive Theme Preview Settings', 'responsive-theme-preview'); ?></h1>
+    // Handle AJAX requests for import/export/reset
+    public function handle_ajax_requests() {
+        // Import settings
+        if (isset($_POST['action']) && $_POST['action'] === 'rtp_import_settings') {
+            check_ajax_referer('rtp_admin_nonce', 'rtp_import_nonce');
 
-            <?php settings_errors(); ?>
+            if (! current_user_can('manage_options')) {
+                wp_die('You do not have sufficient permissions');
+            }
 
-            <nav class="nav-tab-wrapper rtp-settings-tabs">
-                <a href="#" class="nav-tab" data-tab="general-tab"><?php esc_html_e('General', 'responsive-theme-preview'); ?></a>
-                <a href="#" class="nav-tab" data-tab="appearance-tab"><?php esc_html_e('Appearance', 'responsive-theme-preview'); ?></a>
-                <a href="#" class="nav-tab" data-tab="performance-tab"><?php esc_html_e('Performance', 'responsive-theme-preview'); ?></a>
-                <a href="#" class="nav-tab" data-tab="accessibility-tab"><?php esc_html_e('Accessibility', 'responsive-theme-preview'); ?></a>
-                <a href="#" class="nav-tab" data-tab="advanced-tab"><?php esc_html_e('Advanced', 'responsive-theme-preview'); ?></a>
-            </nav>
+            if (isset($_POST['rtp_settings'])) {
+                $settings = json_decode(stripslashes($_POST['rtp_settings']), true);
 
-            <form method="post" action="options.php">
-                <?php settings_fields(self::OPTION_NAME); ?>
+                if ($settings && is_array($settings)) {
+                    $sanitized = RTP_Advanced_Settings::sanitize_settings($settings);
+                    update_option('rtp_settings', $sanitized);
 
-                <!-- General Settings Tab -->
-                <div id="general-tab" class="rtp-tab-content">
-                    <div class="rtp-settings-section">
-                        <h3><?php esc_html_e('Preview Settings', 'responsive-theme-preview'); ?></h3>
+                    wp_redirect(add_query_arg(array(
+                        'rtp-message' => 'Settings imported successfully!',
+                        'rtp-type' => 'success'
+                    ), admin_url('admin.php?page=rtp-settings')));
+                    exit;
+                }
+            }
 
-                        <div class="rtp-settings-field">
-                            <label for="preview_start_with_device"><?php esc_html_e('Start With Device', 'responsive-theme-preview'); ?></label>
-                            <select id="preview_start_with_device" name="<?php echo esc_attr(self::OPTION_NAME); ?>[preview_start_with_device]">
-                                <option value="desktop" <?php selected($settings['preview_start_with_device'], 'desktop'); ?>><?php esc_html_e('Desktop', 'responsive-theme-preview'); ?></option>
-                                <option value="tablet" <?php selected($settings['preview_start_with_device'], 'tablet'); ?>><?php esc_html_e('Tablet', 'responsive-theme-preview'); ?></option>
-                                <option value="mobile" <?php selected($settings['preview_start_with_device'], 'mobile'); ?>><?php esc_html_e('Mobile', 'responsive-theme-preview'); ?></option>
-                            </select>
-                        </div>
+            wp_redirect(add_query_arg(array(
+                'rtp-message' => 'Failed to import settings. Please check the file format.',
+                'rtp-type' => 'error'
+            ), admin_url('admin.php?page=rtp-settings')));
+            exit;
+        }
 
-                        <div class="rtp-settings-field">
-                            <label for="preview_zoom_level"><?php esc_html_e('Default Zoom Level', 'responsive-theme-preview'); ?></label>
-                            <input type="number" id="preview_zoom_level" name="<?php echo esc_attr(self::OPTION_NAME); ?>[preview_zoom_level]" value="<?php echo esc_attr($settings['preview_zoom_level']); ?>" class="rtp-number-field" min="0.5" max="2.0" step="0.1" />
-                            <p class="description"><?php esc_html_e('Default zoom level for previews (1.0 = 100%).', 'responsive-theme-preview'); ?></p>
-                        </div>
+        // Export settings
+        if (isset($_GET['action']) && $_GET['action'] === 'rtp_export_settings') {
+            if (! current_user_can('manage_options')) {
+                wp_die('You do not have sufficient permissions');
+            }
 
-                        <div class="rtp-settings-field">
-                            <label>
-                                <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[preview_allow_zoom]" value="1" <?php checked($settings['preview_allow_zoom']); ?> class="rtp-settings-checkbox" />
-                                <?php esc_html_e('Allow Zoom Controls', 'responsive-theme-preview'); ?>
-                            </label>
-                        </div>
+            $settings = get_option('rtp_settings', array());
+            $defaults = RTP_Advanced_Settings::get_defaults();
+            $export_data = wp_parse_args($settings, $defaults);
 
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Default Breakpoints', 'responsive-theme-preview'); ?></h3>
+            header('Content-Type: application/json');
+            header('Content-Disposition: attachment; filename="rtp-settings-' . date('Y-m-d') . '.json"');
+            echo json_encode($export_data, JSON_PRETTY_PRINT);
+            exit;
+        }
 
-                            <div class="rtp-settings-field">
-                                <p><?php esc_html_e('Configure the default device breakpoints for preview.', 'responsive-theme-preview'); ?></p>
-                                <div id="rtp-breakpoints-container">
-                                    <?php
-                                    $breakpoints = $settings['default_breakpoints'];
-                                    if (empty($breakpoints)) {
-                                        $breakpoints = array(
-                                            array('title' => 'Desktop', 'width' => 1280, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE4IDJINmMtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMmMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE2SDZWNmgxMnYxMnpNOSA4aDZ2Mkg5Vjh6bTAgNGg2djJIOXYtMnptMCA0aDZ2Mkg5di0yeiIvPjwvc3ZnPg=='),
-                                            array('title' => 'Tablet', 'width' => 768, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE5IDFINVYyM2gxNFYxem0wIDIySDVWM2gxNHYyMHpNOSAxOWg2djJIOXYtMnptMC0xNGg2djEwSDlWNXoiLz48L3N2Zz4='),
-                                            array('title' => 'Mobile', 'width' => 375, 'icon' => 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PHBhdGggZD0iTTE3IDJIN2MtMS4xIDAtMiAuOS0yIDJ2MTZjMCAxLjEuOSAyIDIgMmgxMGMxLjEgMCAyLS45IDItMlY0YzAtMS4xLS45LTItMi0yem0wIDE4SDdWNmgxMHYxNHptLTUtMTJoMnY4aC0yVjh6Ii8+PC9zdmc+'),
-                                        );
-                                    }
+        // Reset settings
+        if (isset($_GET['action']) && $_GET['action'] === 'rtp_reset_settings') {
+            if (! current_user_can('manage_options')) {
+                wp_die('You do not have sufficient permissions');
+            }
 
-                                    foreach ($breakpoints as $index => $breakpoint) :
-                                    ?>
-                                        <div class="rtp-breakpoint-item" data-index="<?php echo $index; ?>">
-                                            <div class="rtp-breakpoint-fields">
-                                                <div class="rtp-field-row">
-                                                    <label><?php esc_html_e('Title', 'responsive-theme-preview'); ?></label>
-                                                    <input type="text" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo $index; ?>][title]" value="<?php echo esc_attr($breakpoint['title']); ?>" placeholder="<?php esc_attr_e('Desktop', 'responsive-theme-preview'); ?>" />
-                                                </div>
-                                                <div class="rtp-field-row">
-                                                    <label><?php esc_html_e('Width (px)', 'responsive-theme-preview'); ?></label>
-                                                    <input type="number" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo $index; ?>][width]" value="<?php echo esc_attr($breakpoint['width']); ?>" min="320" max="2560" />
-                                                </div>
-                                                <div class="rtp-field-row">
-                                                    <label><?php esc_html_e('Icon Image', 'responsive-theme-preview'); ?></label>
-                                                    <div class="rtp-media-uploader">
-                                                        <input type="text" class="rtp-media-input" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo $index; ?>][icon]" value="<?php echo esc_attr($breakpoint['icon']); ?>" placeholder="<?php esc_attr_e('Enter image URL or click to upload', 'responsive-theme-preview'); ?>" />
-                                                        <button type="button" class="button rtp-media-upload-button" data-target="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo $index; ?>][icon]"><?php esc_html_e('Upload', 'responsive-theme-preview'); ?></button>
-                                                        <?php if (!empty($breakpoint['icon'])) : ?>
-                                                            <div class="rtp-media-preview">
-                                                                <img src="<?php echo esc_url($breakpoint['icon']); ?>" alt="<?php esc_attr_e('Icon Preview', 'responsive-theme-preview'); ?>" style="max-width: 30px; max-height: 30px; vertical-align: middle;" />
-                                                            </div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="rtp-breakpoint-actions">
-                                                <button type="button" class="button rtp-remove-breakpoint"><?php esc_html_e('Remove', 'responsive-theme-preview'); ?></button>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                <button type="button" id="rtp-add-breakpoint" class="button"><?php esc_html_e('Add Breakpoint', 'responsive-theme-preview'); ?></button>
-                            </div>
-                        </div>
+            delete_option('rtp_settings');
 
-                    </div>
-
-                    <!-- Appearance Settings Tab -->
-                    <div id="appearance-tab" class="rtp-tab-content">
-
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Device Button Settings', 'responsive-theme-preview'); ?></h3>
-
-                            <div class="rtp-settings-field">
-                                <label for="device_button_style"><?php esc_html_e('Button Style', 'responsive-theme-preview'); ?></label>
-                                <select id="device_button_style" name="<?php echo esc_attr(self::OPTION_NAME); ?>[device_button_style]">
-                                    <option value="default" <?php selected($settings['device_button_style'], 'default'); ?>><?php esc_html_e('Default', 'responsive-theme-preview'); ?></option>
-                                    <option value="rounded" <?php selected($settings['device_button_style'], 'rounded'); ?>><?php esc_html_e('Rounded', 'responsive-theme-preview'); ?></option>
-                                    <option value="square" <?php selected($settings['device_button_style'], 'square'); ?>><?php esc_html_e('Square', 'responsive-theme-preview'); ?></option>
-                                </select>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="device_button_size"><?php esc_html_e('Button Size', 'responsive-theme-preview'); ?></label>
-                                <select id="device_button_size" name="<?php echo esc_attr(self::OPTION_NAME); ?>[device_button_size]">
-                                    <option value="small" <?php selected($settings['device_button_size'], 'small'); ?>><?php esc_html_e('Small', 'responsive-theme-preview'); ?></option>
-                                    <option value="medium" <?php selected($settings['device_button_size'], 'medium'); ?>><?php esc_html_e('Medium', 'responsive-theme-preview'); ?></option>
-                                    <option value="large" <?php selected($settings['device_button_size'], 'large'); ?>><?php esc_html_e('Large', 'responsive-theme-preview'); ?></option>
-                                </select>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="device_button_active_color"><?php esc_html_e('Active Button Color', 'responsive-theme-preview'); ?></label>
-                                <input type="text" id="device_button_active_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[device_button_active_color]" value="<?php echo esc_attr($settings['device_button_active_color']); ?>" class="rtp-color-picker" />
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="device_button_hover_color"><?php esc_html_e('Hover Button Color', 'responsive-theme-preview'); ?></label>
-                                <input type="text" id="device_button_hover_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[device_button_hover_color]" value="<?php echo esc_attr($settings['device_button_hover_color']); ?>" class="rtp-color-picker" />
-                            </div>
-                        </div>
-
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Topbar Settings', 'responsive-theme-preview'); ?></h3>
-
-                            <div class="rtp-settings-field">
-                                <label for="topbar_height"><?php esc_html_e('Topbar Height (px)', 'responsive-theme-preview'); ?></label>
-                                <input type="number" id="topbar_height" name="<?php echo esc_attr(self::OPTION_NAME); ?>[topbar_height]" value="<?php echo esc_attr($settings['topbar_height']); ?>" class="rtp-number-field" min="40" max="100" />
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="topbar_title_size"><?php esc_html_e('Title Font Size (px)', 'responsive-theme-preview'); ?></label>
-                                <input type="number" id="topbar_title_size" name="<?php echo esc_attr(self::OPTION_NAME); ?>[topbar_title_size]" value="<?php echo esc_attr($settings['topbar_title_size']); ?>" class="rtp-number-field" min="10" max="24" />
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="topbar_title_weight"><?php esc_html_e('Title Font Weight', 'responsive-theme-preview'); ?></label>
-                                <select id="topbar_title_weight" name="<?php echo esc_attr(self::OPTION_NAME); ?>[topbar_title_weight]">
-                                    <option value="100" <?php selected($settings['topbar_title_weight'], '100'); ?>><?php esc_html_e('Thin (100)', 'responsive-theme-preview'); ?></option>
-                                    <option value="200" <?php selected($settings['topbar_title_weight'], '200'); ?>><?php esc_html_e('Extra Light (200)', 'responsive-theme-preview'); ?></option>
-                                    <option value="300" <?php selected($settings['topbar_title_weight'], '300'); ?>><?php esc_html_e('Light (300)', 'responsive-theme-preview'); ?></option>
-                                    <option value="400" <?php selected($settings['topbar_title_weight'], '400'); ?>><?php esc_html_e('Normal (400)', 'responsive-theme-preview'); ?></option>
-                                    <option value="500" <?php selected($settings['topbar_title_weight'], '500'); ?>><?php esc_html_e('Medium (500)', 'responsive-theme-preview'); ?></option>
-                                    <option value="600" <?php selected($settings['topbar_title_weight'], '600'); ?>><?php esc_html_e('Semi Bold (600)', 'responsive-theme-preview'); ?></option>
-                                    <option value="700" <?php selected($settings['topbar_title_weight'], '700'); ?>><?php esc_html_e('Bold (700)', 'responsive-theme-preview'); ?></option>
-                                    <option value="800" <?php selected($settings['topbar_title_weight'], '800'); ?>><?php esc_html_e('Extra Bold (800)', 'responsive-theme-preview'); ?></option>
-                                    <option value="900" <?php selected($settings['topbar_title_weight'], '900'); ?>><?php esc_html_e('Black (900)', 'responsive-theme-preview'); ?></option>
-                                    <option value="normal" <?php selected($settings['topbar_title_weight'], 'normal'); ?>><?php esc_html_e('Normal', 'responsive-theme-preview'); ?></option>
-                                    <option value="bold" <?php selected($settings['topbar_title_weight'], 'bold'); ?>><?php esc_html_e('Bold', 'responsive-theme-preview'); ?></option>
-                                </select>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[topbar_sticky]" value="1" <?php checked($settings['topbar_sticky']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Sticky Topbar', 'responsive-theme-preview'); ?>
-                                </label>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[topbar_hide_on_scroll]" value="1" <?php checked($settings['topbar_hide_on_scroll']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Hide on Scroll', 'responsive-theme-preview'); ?>
-                                </label>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="topbar_bg"><?php esc_html_e('Topbar Background Color', 'responsive-theme-preview'); ?></label>
-                                <input type="text" id="topbar_bg" name="<?php echo esc_attr(self::OPTION_NAME); ?>[topbar_bg]" value="<?php echo esc_attr($settings['topbar_bg']); ?>" class="rtp-color-picker" />
-                            </div>
-                        </div>
-
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Overlay Settings', 'responsive-theme-preview'); ?></h3>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[overlay_close_on_click]" value="1" <?php checked($settings['overlay_close_on_click']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Close on Click Outside', 'responsive-theme-preview'); ?>
-                                </label>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[overlay_close_on_esc]" value="1" <?php checked($settings['overlay_close_on_esc']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Close on ESC Key', 'responsive-theme-preview'); ?>
-                                </label>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[overlay_loading_indicator]" value="1" <?php checked($settings['overlay_loading_indicator']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Show Loading Indicator', 'responsive-theme-preview'); ?>
-                                </label>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="overlay_loading_color"><?php esc_html_e('Loading Indicator Color', 'responsive-theme-preview'); ?></label>
-                                <input type="text" id="overlay_loading_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[overlay_loading_color]" value="<?php echo esc_attr($settings['overlay_loading_color']); ?>" class="rtp-color-picker" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Performance Settings Tab -->
-                    <div id="performance-tab" class="rtp-tab-content">
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Performance Settings', 'responsive-theme-preview'); ?></h3>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[lazy_load_preview]" value="1" <?php checked($settings['lazy_load_preview']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Lazy Load Previews', 'responsive-theme-preview'); ?>
-                                </label>
-                                <p class="description"><?php esc_html_e('Load preview content only when needed.', 'responsive-theme-preview'); ?></p>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[preload_previews]" value="1" <?php checked($settings['preload_previews']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Preload Previews', 'responsive-theme-preview'); ?>
-                                </label>
-                                <p class="description"><?php esc_html_e('Preload preview content for faster access.', 'responsive-theme-preview'); ?></p>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[cache_previews]" value="1" <?php checked($settings['cache_previews']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Cache Previews', 'responsive-theme-preview'); ?>
-                                </label>
-                                <p class="description"><?php esc_html_e('Cache preview content to improve performance.', 'responsive-theme-preview'); ?></p>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="cache_duration"><?php esc_html_e('Cache Duration (seconds)', 'responsive-theme-preview'); ?></label>
-                                <input type="number" id="cache_duration" name="<?php echo esc_attr(self::OPTION_NAME); ?>[cache_duration]" value="<?php echo esc_attr($settings['cache_duration']); ?>" class="rtp-number-field" min="300" max="86400" step="300" />
-                                <p class="description"><?php esc_html_e('How long to cache preview content in seconds.', 'responsive-theme-preview'); ?></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Accessibility Settings Tab -->
-                    <div id="accessibility-tab" class="rtp-tab-content">
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Accessibility Settings', 'responsive-theme-preview'); ?></h3>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[enable_keyboard_nav]" value="1" <?php checked($settings['enable_keyboard_nav']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Enable Keyboard Navigation', 'responsive-theme-preview'); ?>
-                                </label>
-                                <p class="description"><?php esc_html_e('Allow keyboard navigation through preview controls.', 'responsive-theme-preview'); ?></p>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[enable_screen_reader]" value="1" <?php checked($settings['enable_screen_reader']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Enable Screen Reader Support', 'responsive-theme-preview'); ?>
-                                </label>
-                                <p class="description"><?php esc_html_e('Add ARIA labels for screen readers.', 'responsive-theme-preview'); ?></p>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[focus_outline]" value="1" <?php checked($settings['focus_outline']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Show Focus Outline', 'responsive-theme-preview'); ?>
-                                </label>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="focus_outline_color"><?php esc_html_e('Focus Outline Color', 'responsive-theme-preview'); ?></label>
-                                <input type="text" id="focus_outline_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[focus_outline_color]" value="<?php echo esc_attr($settings['focus_outline_color']); ?>" class="rtp-color-picker" />
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="focus_outline_width"><?php esc_html_e('Focus Outline Width (px)', 'responsive-theme-preview'); ?></label>
-                                <input type="number" id="focus_outline_width" name="<?php echo esc_attr(self::OPTION_NAME); ?>[focus_outline_width]" value="<?php echo esc_attr($settings['focus_outline_width']); ?>" class="rtp-number-field" min="1" max="5" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Advanced Settings Tab -->
-                    <div id="advanced-tab" class="rtp-tab-content">
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Developer Settings', 'responsive-theme-preview'); ?></h3>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[debug_mode]" value="1" <?php checked($settings['debug_mode']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Debug Mode', 'responsive-theme-preview'); ?>
-                                </label>
-                                <p class="description"><?php esc_html_e('Enable debug mode for development.', 'responsive-theme-preview'); ?></p>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label>
-                                    <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[log_events]" value="1" <?php checked($settings['log_events']); ?> class="rtp-settings-checkbox" />
-                                    <?php esc_html_e('Log Events', 'responsive-theme-preview'); ?>
-                                </label>
-                                <p class="description"><?php esc_html_e('Log plugin events to the console.', 'responsive-theme-preview'); ?></p>
-                            </div>
-                        </div>
-
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Custom Code', 'responsive-theme-preview'); ?></h3>
-
-                            <div class="rtp-settings-field">
-                                <label for="custom_css"><?php esc_html_e('Custom CSS', 'responsive-theme-preview'); ?></label>
-                                <textarea id="custom_css" name="<?php echo esc_attr(self::OPTION_NAME); ?>[custom_css]" rows="10" class="large-text"><?php echo esc_textarea($settings['custom_css']); ?></textarea>
-                                <p class="description"><?php esc_html_e('Add custom CSS to override default styles.', 'responsive-theme-preview'); ?></p>
-                            </div>
-
-                            <div class="rtp-settings-field">
-                                <label for="custom_js"><?php esc_html_e('Custom JavaScript', 'responsive-theme-preview'); ?></label>
-                                <textarea id="custom_js" name="<?php echo esc_attr(self::OPTION_NAME); ?>[custom_js]" rows="10" class="large-text"><?php echo esc_textarea($settings['custom_js']); ?></textarea>
-                                <p class="description"><?php esc_html_e('Add custom JavaScript for additional functionality.', 'responsive-theme-preview'); ?></p>
-                            </div>
-                        </div>
-
-                        <div class="rtp-settings-section">
-                            <h3><?php esc_html_e('Reset Settings', 'responsive-theme-preview'); ?></h3>
-
-                            <div class="rtp-settings-field">
-                                <p><?php esc_html_e('If you want to reset all settings to their default values, click the button below.', 'responsive-theme-preview'); ?></p>
-                                <button type="button" id="rtp-reset-settings" class="button button-secondary"><?php esc_html_e('Reset All Settings', 'responsive-theme-preview'); ?></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <?php submit_button(); ?>
-            </form>
-        </div>
-
-        <script>
-            jQuery(document).ready(function($) {
-                $('#rtp-reset-settings').on('click', function(e) {
-                    e.preventDefault();
-
-                    if (confirm('<?php esc_html_e('Are you sure you want to reset all settings to their default values? This action cannot be undone.', 'responsive-theme-preview'); ?>')) {
-                        $.ajax({
-                            url: ajaxurl,
-                            type: 'POST',
-                            data: {
-                                action: 'rtp_reset_settings',
-                                nonce: '<?php echo wp_create_nonce('rtp_reset_settings'); ?>'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    location.reload();
-                                } else {
-                                    alert('<?php esc_html_e('Error resetting settings. Please try again.', 'responsive-theme-preview'); ?>');
-                                }
-                            },
-                            error: function() {
-                                alert('<?php esc_html_e('Error resetting settings. Please try again.', 'responsive-theme-preview'); ?>');
-                            }
-                        });
-                    }
-                });
-            });
-        </script>
-<?php
+            wp_redirect(add_query_arg(array(
+                'rtp-message' => 'Settings reset to defaults!',
+                'rtp-type' => 'success'
+            ), admin_url('admin.php?page=rtp-settings')));
+            exit;
+        }
     }
 }
-
-// Initialize the admin settings
-RTP_Admin_Settings::init();
-
-// Add AJAX handler for resetting settings
-add_action('wp_ajax_rtp_reset_settings', function () {
-    check_ajax_referer('rtp_reset_settings', 'nonce');
-
-    if (! current_user_can('manage_options')) {
-        wp_send_json_error();
-    }
-
-    delete_option(RTP_Admin_Settings::OPTION_NAME);
-    wp_send_json_success();
-});
