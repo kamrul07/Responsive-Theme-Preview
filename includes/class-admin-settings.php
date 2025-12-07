@@ -319,6 +319,8 @@ class RTP_Admin_Settings {
                 case 'device_button_hover_color':
                 case 'overlay_loading_color':
                 case 'focus_outline_color':
+                case 'cta_button_bg_color':
+                case 'cta_button_color':
                     $sanitized[$key] = sanitize_hex_color($value);
                     break;
 
@@ -401,6 +403,7 @@ class RTP_Admin_Settings {
         <a href="#" class="nav-tab" data-tab="appearance-tab"><?php esc_html_e('Appearance', 'responsive-theme-preview'); ?></a>
         <a href="#" class="nav-tab" data-tab="performance-tab"><?php esc_html_e('Performance', 'responsive-theme-preview'); ?></a>
         <a href="#" class="nav-tab" data-tab="accessibility-tab"><?php esc_html_e('Accessibility', 'responsive-theme-preview'); ?></a>
+        <a href="#" class="nav-tab" data-tab="filtering-tab"><?php esc_html_e('Filtering', 'responsive-theme-preview'); ?></a>
         <a href="#" class="nav-tab" data-tab="advanced-tab"><?php esc_html_e('Advanced', 'responsive-theme-preview'); ?></a>
     </nav>
 
@@ -513,12 +516,12 @@ class RTP_Admin_Settings {
                 </div>
 
                 <div class="rtp-settings-field">
-                    <label for="device_button_active_color"><?php esc_html_e('Active Button Color', 'responsive-theme-preview'); ?></label>
+                    <label for="device_button_active_color"><?php esc_html_e('Button background', 'responsive-theme-preview'); ?></label>
                     <input type="text" id="device_button_active_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[device_button_active_color]" value="<?php echo esc_attr($settings['device_button_active_color']); ?>" class="rtp-color-picker" />
                 </div>
 
                 <div class="rtp-settings-field">
-                    <label for="device_button_hover_color"><?php esc_html_e('Hover Button Color', 'responsive-theme-preview'); ?></label>
+                    <label for="device_button_hover_color"><?php esc_html_e('Button Color', 'responsive-theme-preview'); ?></label>
                     <input type="text" id="device_button_hover_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[device_button_hover_color]" value="<?php echo esc_attr($settings['device_button_hover_color']); ?>" class="rtp-color-picker" />
                 </div>
             </div>
@@ -600,6 +603,20 @@ class RTP_Admin_Settings {
                 <div class="rtp-settings-field">
                     <label for="overlay_loading_color"><?php esc_html_e('Loading Indicator Color', 'responsive-theme-preview'); ?></label>
                     <input type="text" id="overlay_loading_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[overlay_loading_color]" value="<?php echo esc_attr($settings['overlay_loading_color']); ?>" class="rtp-color-picker" />
+                </div>
+            </div>
+
+            <div class="rtp-settings-section">
+                <h3><?php esc_html_e('CTA Button Settings', 'responsive-theme-preview'); ?></h3>
+
+                <div class="rtp-settings-field">
+                    <label for="cta_button_bg_color"><?php esc_html_e('CTA Button Background Color', 'responsive-theme-preview'); ?></label>
+                    <input type="text" id="cta_button_bg_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[cta_button_bg_color]" value="<?php echo esc_attr($settings['cta_button_bg_color']); ?>" class="rtp-color-picker" />
+                </div>
+
+                <div class="rtp-settings-field">
+                    <label for="cta_button_color"><?php esc_html_e('CTA Button Text Color', 'responsive-theme-preview'); ?></label>
+                    <input type="text" id="cta_button_color" name="<?php echo esc_attr(self::OPTION_NAME); ?>[cta_button_color]" value="<?php echo esc_attr($settings['cta_button_color']); ?>" class="rtp-color-picker" />
                 </div>
             </div>
         </div>
@@ -725,6 +742,37 @@ class RTP_Admin_Settings {
                 <div class="rtp-settings-field">
                     <p><?php esc_html_e('If you want to reset all settings to their default values, click the button below.', 'responsive-theme-preview'); ?></p>
                     <button type="button" id="rtp-reset-settings" class="button button-secondary"><?php esc_html_e('Reset All Settings', 'responsive-theme-preview'); ?></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtering Settings Tab -->
+        <div id="filtering-tab" class="rtp-tab-content">
+            <div class="rtp-settings-section">
+                <h3><?php esc_html_e('Preview Filtering', 'responsive-theme-preview'); ?></h3>
+
+                <div class="rtp-settings-field">
+                    <label>
+                        <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[enable_preview_filtering]" value="1" <?php checked($settings['enable_preview_filtering']); ?> class="rtp-settings-checkbox" />
+                        <?php esc_html_e('Enable Preview Filtering', 'responsive-theme-preview'); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e('Enable filtering options for preview displays.', 'responsive-theme-preview'); ?></p>
+                </div>
+
+                <div class="rtp-settings-field">
+                    <label>
+                        <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[filter_by_category]" value="1" <?php checked($settings['filter_by_category']); ?> class="rtp-settings-checkbox" />
+                        <?php esc_html_e('Filter by Category', 'responsive-theme-preview'); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e('Allow filtering previews by category.', 'responsive-theme-preview'); ?></p>
+                </div>
+
+                <div class="rtp-settings-field">
+                    <label>
+                        <input type="checkbox" name="<?php echo esc_attr(self::OPTION_NAME); ?>[show_filter_count]" value="1" <?php checked($settings['show_filter_count']); ?> class="rtp-settings-checkbox" />
+                        <?php esc_html_e('Show Filter Count', 'responsive-theme-preview'); ?>
+                    </label>
+                    <p class="description"><?php esc_html_e('Display the number of items in each filter category.', 'responsive-theme-preview'); ?></p>
                 </div>
             </div>
         </div>

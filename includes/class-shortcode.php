@@ -20,21 +20,44 @@ class RTP_Shortcode {
 			'overlay_bg'     => 'rgba(0,0,0,.6)',
 			'preview_btn_pos' => 'pos-br',
 			'preview_type'   => 'popup',
+			'category'       => '',
+			'enable_filter'  => 'false',
 		), $atts, 'responsive_preview');
 
 		$items = array();
 		if ('dynamic' === $atts['source']) {
-			$q = new WP_Query(array(
+			$query_args = array(
 				'post_type'      => RTP_CPT::POST_TYPE,
 				'posts_per_page'  => (int) $atts['count'],
 				'no_found_rows'   => true,
 				'post_status'     => 'publish',
-			));
+			);
+
+			// Add category filter if specified
+			if (!empty($atts['category'])) {
+				$query_args['tax_query'] = array(
+					array(
+						'taxonomy' => 'rtp-category',
+						'field'    => 'slug',
+						'terms'    => $atts['category'],
+					),
+				);
+			}
+
+			$q = new WP_Query($query_args);
 			if ($q->have_posts()) {
 				while ($q->have_posts()) {
 					$q->the_post();
 					$img = get_post_meta(get_the_ID(), RTP_CPT::META_IMAGE, true);
 					$url = get_post_meta(get_the_ID(), RTP_CPT::META_URL, true);
+
+					// Get categories for this preview
+					$categories = get_the_terms(get_the_ID(), 'rtp-category');
+					$category_slugs = array();
+					if (!is_wp_error($categories) && !empty($categories)) {
+						$category_slugs = wp_list_pluck($categories, 'slug');
+					}
+
 					$items[] = array(
 						'image'     => $img,
 						'title'     => get_the_title(),
@@ -42,6 +65,8 @@ class RTP_Shortcode {
 						'btn'       => __('Preview', 'responsive-theme-preview'),
 						'post_id'   => get_the_ID(),
 						'permalink' => get_permalink(),
+						'categories' => $category_slugs,
+						'category_slug' => !empty($category_slugs) ? implode(',', $category_slugs) : '',
 					);
 				}
 				wp_reset_postdata();
@@ -107,6 +132,8 @@ class RTP_Shortcode {
 			'breakpoints'    => $bps,
 			'preview_type'   => ('dynamic' === $atts['source']) ? $atts['preview_type'] : 'popup',
 			'advanced_settings' => $advanced_settings,
+			'enable_category_filter' => filter_var($atts['enable_filter'], FILTER_VALIDATE_BOOLEAN),
+			'section_id'      => 'rtp-shortcode-' . uniqid(),
 		));
 	}
 }

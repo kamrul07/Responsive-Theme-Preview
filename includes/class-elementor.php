@@ -23,6 +23,28 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 		return array('basic');
 	}
 
+	/**
+	 * Get category options for select control
+	 */
+	public static function get_category_options() {
+		$options = array(
+			'' => __('All Categories', 'responsive-theme-preview'),
+		);
+
+		$categories = get_terms(array(
+			'taxonomy' => 'rtp-category',
+			'hide_empty' => true,
+		));
+
+		if (!is_wp_error($categories) && !empty($categories)) {
+			foreach ($categories as $category) {
+				$options[$category->slug] = $category->name;
+			}
+		}
+
+		return $options;
+	}
+
 	protected function _register_controls() {
 
 		$this->start_controls_section(
@@ -79,6 +101,27 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'category_filter',
+			array(
+				'label'     => __('Filter by Category', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => '',
+				'options'    => self::get_category_options(),
+				'condition' => array('source' => 'dynamic'),
+			)
+		);
+
+		$this->add_control(
+			'enable_category_filter',
+			array(
+				'label'     => __('Enable Frontend Category Filter', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::SWITCHER,
+				'default'   => 'no',
+				'condition' => array('source' => 'dynamic'),
+			)
+		);
+
 		$rep = new \Elementor\Repeater();
 		$rep->add_control(
 			'image',
@@ -109,7 +152,6 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 				'default' => __('Preview', 'responsive-theme-preview'),
 			)
 		);
-
 		$this->add_control(
 			'items',
 			array(
@@ -142,8 +184,12 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 		$bp->add_control(
 			'icon',
 			array(
-				'label' => __('Icon Image', 'responsive-theme-preview'),
-				'type'  => Controls_Manager::MEDIA,
+				'label'   => __('Icon', 'responsive-theme-preview'),
+				'type'    => Controls_Manager::ICONS,
+				'default' => array(
+					'value'   => 'fas fa-mobile-alt',
+					'library' => 'fa-solid',
+				),
 			)
 		);
 
@@ -154,9 +200,9 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 				'type'    => Controls_Manager::REPEATER,
 				'fields'  => $bp->get_controls(),
 				'default' => array(
-					array('title' => 'Mobile',  'width' => 375,  'icon' => array('url' => '')),
-					array('title' => 'Tablet',  'width' => 768,  'icon' => array('url' => '')),
-					array('title' => 'Desktop', 'width' => 1280, 'icon' => array('url' => '')),
+					array('title' => 'Mobile',  'width' => 375,  'icon' => array('value' => 'fas fa-mobile-alt', 'library' => 'fa-solid')),
+					array('title' => 'Tablet',  'width' => 768,  'icon' => array('value' => 'fas fa-tablet-alt', 'library' => 'fa-solid')),
+					array('title' => 'Desktop', 'width' => 1280, 'icon' => array('value' => 'fas fa-desktop', 'library' => 'fa-solid')),
 				),
 			)
 		);
@@ -194,94 +240,634 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 			array(
 				'label'   => __('Preview Button Position', 'responsive-theme-preview'),
 				'type'    => Controls_Manager::SELECT,
-				'default' => 'pos-br',
+				'default' => 'pos-center',
 				'options' => array(
 					'pos-br' => 'Bottom Right',
 					'pos-bl' => 'Bottom Left',
 					'pos-tr' => 'Top Right',
 					'pos-tl' => 'Top Left',
+					'pos-center' => 'Center',
 				),
 			)
 		);
 
 		$this->end_controls_section();
 
+		// Card Style Section
 		$this->start_controls_section(
-			'rtp_style',
+			'rtp_card_style',
 			array(
-				'label' => __('Styles', 'responsive-theme-preview'),
+				'label' => __('Card Style', 'responsive-theme-preview'),
 				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+
+		$this->add_control(
+			'card_bg',
+			array(
+				'label'     => __('Card Background', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#ffffff',
+				'selectors' => array('{{WRAPPER}} .rtp-card' => 'background: {{VALUE}};'),
+			)
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			array(
+				'name'     => 'card_border',
+				'selector' => '{{WRAPPER}} .rtp-card',
+				'default' => array(
+					'border' => 'solid',
+					'width' => array(
+						'top' => 1,
+						'right' => 1,
+						'bottom' => 1,
+						'left' => 1,
+					),
+					'color' => '#e5e7eb',
+					'radius' => array(
+						'top' => 8,
+						'right' => 8,
+						'bottom' => 8,
+						'left' => 8,
+					),
+				),
 			)
 		);
 
 		$this->add_group_control(
 			Group_Control_Typography::get_type(),
 			array(
-				'name'     => 'title_typo',
+				'name'     => 'title_typography',
 				'selector' => '{{WRAPPER}} .rtp-title',
-			)
-		);
-
-		$this->add_control(
-			'title_color',
-			array(
-				'label'     => __('Title Color', 'responsive-theme-preview'),
-				'type'      => Controls_Manager::COLOR,
-				'selectors' => array('{{WRAPPER}} .rtp-title' => 'color: {{VALUE}};'),
 			)
 		);
 
 		$this->add_control(
 			'preview_btn_bg',
 			array(
-				'label'     => __('Preview Button BG', 'responsive-theme-preview'),
+				'label'     => __('Button Background', 'responsive-theme-preview'),
 				'type'      => Controls_Manager::COLOR,
+				'default'   => '#1f2937',
 				'selectors' => array('{{WRAPPER}} .rtp-open' => 'background: {{VALUE}};'),
 			)
 		);
 
-		$this->add_control(
-			'preview_btn_color',
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
 			array(
-				'label'     => __('Preview Button Text', 'responsive-theme-preview'),
-				'type'      => Controls_Manager::COLOR,
-				'selectors' => array('{{WRAPPER}} .rtp-open' => 'color: {{VALUE}};'),
+				'name'     => 'button_typography',
+				'selector' => '{{WRAPPER}} .rtp-open',
+			)
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			array(
+				'name'     => 'button_border',
+				'selector' => '{{WRAPPER}} .rtp-open',
+				'default' => array(
+					'border' => 'solid',
+					'width' => array(
+						'top' => 0,
+						'right' => 0,
+						'bottom' => 0,
+						'left' => 0,
+					),
+					'color' => '#1f2937',
+					'radius' => array(
+						'top' => 8,
+						'right' => 8,
+						'bottom' => 8,
+						'left' => 8,
+					),
+				),
+			)
+		);
+
+		$this->add_responsive_control(
+			'card_button_border_radius',
+			array(
+				'label'      => __('Card Button Border Radius (px)', 'responsive-theme-preview'),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => array('px', '%'),
+				'range'      => array(
+					'px' => array(
+						'min'  => 0,
+						'max'  => 50,
+						'step'  => 1,
+					),
+				),
+				'default' => [
+					'unit' => 'px',
+					'size' => 50,
+				],
+				'selectors'  => array(
+					'{{WRAPPER}} .rtp-open' => 'border-radius: {{SIZE}}{{UNIT}};',
+				),
+			)
+		);
+
+		$this->end_controls_section();
+
+		// Filter Style Section
+		$this->start_controls_section(
+			'rtp_filter_style',
+			array(
+				'label' => __('Filter Style', 'responsive-theme-preview'),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+
+		$this->add_responsive_control(
+			'filter_width',
+			array(
+				'label'     => __('Single Filter Width', 'responsive-theme-preview'),
+				'type' => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => ['px', '%', 'em', 'rem', 'custom'],
+				'range' => [
+					'px' => [
+						'min' => 0,
+						'max' => 1000,
+						'step' => 5,
+					],
+					'%' => [
+						'min' => 0,
+						'max' => 100,
+					],
+				],
+				'default' => [
+					'unit' => 'custom',
+					'size' => "auto",
+				],
+				'selectors' => array('{{WRAPPER}} .singlecategory-filter' => 'width: {{SIZE}}{{UNIT}};'),
+			)
+		);
+
+		$this->add_responsive_control(
+			'filter_direction',
+			array(
+				'label'     => __('Direction', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => 'row',
+				'options'   => array(
+					'row'  => __('Row', 'responsive-theme-preview'),
+					'column' => __('Column', 'responsive-theme-preview'),
+					'row-reverse' => __('Row Reverse', 'responsive-theme-preview'),
+					'column-reverse' => __('Column Reverse', 'responsive-theme-preview'),
+				),
+				'selectors' => array('{{WRAPPER}} .rtp-category-filter-inner' => 'flex-direction: {{VALUE}};'),
+			)
+		);
+
+		$this->add_responsive_control(
+			'filter_align_items',
+			array(
+				'label'     => __('Align Items', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => 'center',
+				'options'   => array(
+					'flex-start' => __('Start', 'responsive-theme-preview'),
+					'center' => __('Center', 'responsive-theme-preview'),
+					'flex-end' => __('End', 'responsive-theme-preview'),
+					'stretch' => __('Stretch', 'responsive-theme-preview'),
+					'baseline' => __('Baseline', 'responsive-theme-preview'),
+				),
+				'selectors' => array('{{WRAPPER}} .rtp-category-filter-inner' => 'align-items: {{VALUE}};'),
+			)
+		);
+
+		$this->add_responsive_control(
+			'filter_justify_content',
+			array(
+				'label'     => __('Justify Content', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => 'flex-start',
+				'options'   => array(
+					'flex-start' => __('Start', 'responsive-theme-preview'),
+					'center' => __('Center', 'responsive-theme-preview'),
+					'flex-end' => __('End', 'responsive-theme-preview'),
+					'space-between' => __('Space Between', 'responsive-theme-preview'),
+					'space-around' => __('Space Around', 'responsive-theme-preview'),
+					'space-evenly' => __('Space Evenly', 'responsive-theme-preview'),
+				),
+				'selectors' => array('{{WRAPPER}} .rtp-category-filter-inner' => 'justify-content: {{VALUE}};'),
+			)
+		);
+
+		$this->add_responsive_control(
+			'filter_gap',
+			array(
+				'label'     => __('Gap Between Filters', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::SLIDER,
+				'default'   => array(
+					'size' => 10,
+					'unit' => 'px',
+				),
+				'selectors' => array('{{WRAPPER}} .rtp-category-filter-inner' => 'gap: {{SIZE}}{{UNIT}};'),
+			)
+		);
+
+		$this->add_responsive_control(
+			'filter_wrap',
+			array(
+				'label'     => __('Flex Wrap', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => 'nowrap',
+				'options'   => array(
+					'nowrap' => __('No Wrap', 'responsive-theme-preview'),
+					'wrap' => __('Wrap', 'responsive-theme-preview'),
+				),
+				'selectors' => array('{{WRAPPER}} .rtp-category-filter-inner' => 'flex-wrap: {{VALUE}};'),
+			)
+		);
+
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'filter_typography',
+				'selector' => '{{WRAPPER}} .singlecategory-filter',
 			)
 		);
 
 		$this->add_control(
-			'preview_btn_radius',
+			'filter_color',
 			array(
-				'label'     => __('Preview Button Radius', 'responsive-theme-preview'),
+				'label'     => __('Filter Item Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#ffffff',
+				'selectors' => array('{{WRAPPER}} .singlecategory-filter' => 'color: {{VALUE}};'),
+			)
+		);
+
+		$this->add_control(
+			'filter_bg_color',
+			array(
+				'label'     => __('Filter Background', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#0f172a',
+				'selectors' => array('{{WRAPPER}} .singlecategory-filter' => 'background: {{VALUE}};'),
+			)
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			array(
+				'name'     => 'filter_border',
+				'selector' => '{{WRAPPER}} .singlecategory-filter',
+				'default' => array(
+					'border' => 'solid',
+					'width' => array(
+						'top' => 1,
+						'right' => 1,
+						'bottom' => 1,
+						'left' => 0,
+					),
+					'color' => '#0f172a',
+					'radius' => array(
+						'top' => 20,
+						'right' => 20,
+						'bottom' => 20,
+						'left' => 20,
+					),
+				),
+			)
+		);
+
+		$this->add_responsive_control(
+			'filter_padding',
+			array(
+				'label'     => __('Padding', 'responsive-theme-preview'),
+				'type'      => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => array('px', 'em', '%'),
+				'default'   => array(
+					'top' => '5',
+					'right' => '10',
+					'bottom' => '5',
+					'left' => '10',
+					'unit' => 'px',
+				),
+				'selectors' => array('{{WRAPPER}} .singlecategory-filter' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};'),
+			)
+		);
+
+		$this->add_control(
+			'filter_active_heading',
+			array(
+				'label'     => __('Active State', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$this->add_control(
+			'filter_active_color',
+			array(
+				'label'     => __('Active Font Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#ffffff',
+				'selectors' => array('{{WRAPPER}} .singlecategory-filter.active' => 'color: {{VALUE}};'),
+			)
+		);
+
+		$this->add_control(
+			'filter_active_bg_color',
+			array(
+				'label'     => __('Active Background', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#0463c8',
+				'selectors' => array('{{WRAPPER}} .singlecategory-filter.active' => 'background: {{VALUE}};'),
+			)
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			array(
+				'name'     => 'filter_active_border',
+				'selector' => '{{WRAPPER}} .singlecategory-filter.active',
+				'default' => array(
+					'border' => 'solid',
+					'width' => array(
+						'top' => 1,
+						'right' => 1,
+						'bottom' => 1,
+						'left' => 0,
+					),
+					'color' => '#0463c8',
+					'radius' => array(
+						'top' => 20,
+						'right' => 20,
+						'bottom' => 20,
+						'left' => 20,
+					),
+				),
+			)
+		);
+
+		$this->end_controls_section();
+
+		// Topbar Settings Section
+		$this->start_controls_section(
+			'rtp_topbar_settings',
+			array(
+				'label' => __('Topbar Settings', 'responsive-theme-preview'),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+
+		$this->add_responsive_control(
+			'topbar_height',
+			array(
+				'label'     => __('Topbar Height (px)', 'responsive-theme-preview'),
 				'type'      => Controls_Manager::NUMBER,
-				'selectors' => array('{{WRAPPER}} .rtp-open' => 'border-radius: {{VALUE}}px;'),
+				'default'   => 52,
+				'min'       => 40,
+				'selectors' => array(
+					'{{WRAPPER}} .rtp-topbar' => 'height: {{VALUE}}px;',
+					'{{WRAPPER}} .rtp-framewrap' => 'top: {{VALUE}}px;',
+				),
+			)
+		);
+
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'topbar_title_typography',
+				'selector' => '{{WRAPPER}} .rtp-topbar-title',
 			)
 		);
 
 		$this->add_control(
-			'cta_bg',
+			'topbar_title_color',
 			array(
-				'label'     => __('CTA BG', 'responsive-theme-preview'),
+				'label'     => __('Title Color', 'responsive-theme-preview'),
 				'type'      => Controls_Manager::COLOR,
+				'default'   => '#ffffff',
+				'selectors' => array('{{WRAPPER}} .rtp-topbar-title' => 'color: {{VALUE}};'),
+			)
+		);
+
+		$this->add_control(
+			'overlay_bg_color',
+			array(
+				'label'     => __('Overlay Background', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => 'rgba(0,0,0,.6)',
+				'selectors' => array('{{WRAPPER}} .rtp-overlay:after' => 'background-color: {{VALUE}};'),
+			)
+		);
+
+		$this->add_control(
+			'device_button_heading',
+			array(
+				'label'     => __('Device Button', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$this->add_control(
+			'device_button_color',
+			array(
+				'label'     => __('Button Background Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#1d4ed8',
+				'selectors' => array('{{WRAPPER}} .rtp-devices button' => 'background: {{VALUE}};'),
+			)
+		);
+
+		$this->add_control(
+			'device_button_active_color',
+			array(
+				'label'     => __('Active Button Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#2563eb',
+				'selectors' => array('{{WRAPPER}} .rtp-devices button.active' => 'background: {{VALUE}};'),
+			)
+		);
+
+		$this->add_control(
+			'device_icon_color',
+			array(
+				'label'     => __('Device Icon Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#ffffff',
+				'selectors' => array('{{WRAPPER}} .rtp-devices button svg ' => 'fill: {{VALUE}};'),
+			)
+		);
+
+		$this->add_responsive_control(
+			'device_button_padding',
+			array(
+				'label'     => __('Padding', 'responsive-theme-preview'),
+				'type'      => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => array('px', 'em', '%'),
+				'default'   => array(
+					'top' => '10',
+					'right' => '15',
+					'bottom' => '10',
+					'left' => '15',
+					'unit' => 'px',
+				),
+				'selectors' => array('{{WRAPPER}} .rtp-devices button' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};'),
+			)
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			array(
+				'name'     => 'device_button_border',
+				'selector' => '{{WRAPPER}} .rtp-devices button',
+				'default' => array(
+					'border' => 'none',
+					'width' => array(
+						'top' => 0,
+						'right' => 0,
+						'bottom' => 0,
+						'left' => 0,
+					),
+					'color' => '#ffff00',
+					'radius' => array(
+						'top' => 8,
+						'right' => 8,
+						'bottom' => 8,
+						'left' => 8,
+					),
+				),
+			)
+		);
+
+		$this->add_responsive_control(
+			'device_button_border_radius',
+			array(
+				'label'      => __('Device Button Border Radius (px)', 'responsive-theme-preview'),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units'      =>   ['px', '%'],
+				'range'      => array(
+					'px' => array(
+						'min'  => 0,
+						'max'  => 1000,
+						'step'    => 1,
+					),
+					'%' => [
+						'min' => 0,
+						'max' => 100,
+					],
+				),
+				'default'    => [
+					'unit' => 'px',
+					'size' => 4,
+				],
+
+				'selectors'  => array(
+					'{{WRAPPER}} .rtp-devices button' => 'border-radius: {{SIZE}}{{UNIT}};',
+				),
+			)
+		);
+
+		$this->add_control(
+			'cta_button_heading',
+			array(
+				'label'     => __('CTA Button', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::HEADING,
+				'separator' => 'before',
+			)
+		);
+
+		$this->add_control(
+			'cta_button_bg_color',
+			array(
+				'label'     => __('Button Background Color', 'responsive-theme-preview'),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#2563eb',
 				'selectors' => array('{{WRAPPER}} .rtp-cta' => 'background: {{VALUE}};'),
 			)
 		);
 
 		$this->add_control(
-			'cta_color',
+			'cta_button_color',
 			array(
-				'label'     => __('CTA Text', 'responsive-theme-preview'),
+				'label'     => __('Button Color', 'responsive-theme-preview'),
 				'type'      => Controls_Manager::COLOR,
+				'default'   => '#fff',
 				'selectors' => array('{{WRAPPER}} .rtp-cta' => 'color: {{VALUE}};'),
 			)
 		);
 
-		$this->add_control(
-			'cta_radius',
+		$this->add_responsive_control(
+			'cta_padding',
 			array(
-				'label'     => __('CTA Radius', 'responsive-theme-preview'),
-				'type'      => Controls_Manager::NUMBER,
-				'selectors' => array('{{WRAPPER}} .rtp-cta' => 'border-radius: {{VALUE}}px;'),
+				'label'     => __('Padding', 'responsive-theme-preview'),
+				'type'      => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => array('px', 'em', '%'),
+				'default'   => array(
+					'top' => '6',
+					'right' => '10',
+					'bottom' => '6',
+					'left' => '10',
+					'unit' => 'px',
+				),
+				'selectors' => array('{{WRAPPER}} .rtp-cta' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};'),
+			)
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			array(
+				'name'     => 'cta_button_border',
+				'selector' => '{{WRAPPER}} .rtp-cta',
+				'default' => array(
+					'border' => 'none',
+					'width' => array(
+						'top' => 0,
+						'right' => 0,
+						'bottom' => 0,
+						'left' => 0,
+					),
+					'color' => '#ffff00',
+					'radius' => array(
+						'top' => 8,
+						'right' => 8,
+						'bottom' => 8,
+						'left' => 8,
+					),
+				),
+			)
+		);
+
+		$this->add_responsive_control(
+			'cta_button_border_radius',
+			array(
+				'label'      => __('CTA Button Border Radius (px)', 'responsive-theme-preview'),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units'  =>   ['px', '%'],
+				'range'      => array(
+					'px' => array(
+						'min'  => 0,
+						'max'  => 1000,
+						'step'    => 1,
+					),
+					'%' => [
+						'min' => 0,
+						'max' => 100,
+					],
+				),
+				'default'    => [
+					'unit' => 'px',
+					'size' => 4,
+				],
+				'selectors'  => array(
+					'{{WRAPPER}} .rtp-cta' => 'border-radius: {{SIZE}}{{UNIT}};',
+				),
+			)
+		);
+
+		$this->add_group_control(
+			Group_Control_Typography::get_type(),
+			array(
+				'name'     => 'cta_typography',
+				'selector' => '{{WRAPPER}} .rtp-cta',
 			)
 		);
 
@@ -452,7 +1038,7 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 			)
 		);
 
-		$this->add_control(
+		$this->add_responsive_control(
 			'focus_outline_width',
 			array(
 				'label'     => __('Focus Outline Width (px)', 'responsive-theme-preview'),
@@ -481,17 +1067,41 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 				);
 			}
 		} else {
-			$q = new \WP_Query(array(
+			$category = isset($s['category_filter']) ? $s['category_filter'] : '';
+			$enable_filter = isset($s['enable_category_filter']) && $s['enable_category_filter'] === 'yes';
+
+			$query_args = array(
 				'post_type'      => RTP_CPT::POST_TYPE,
 				'posts_per_page'  => (int) ($s['dynamic_count'] ?? 6),
 				'no_found_rows'   => true,
 				'post_status'     => 'publish',
-			));
+			);
+
+			// Add category filter if specified
+			if (!empty($category)) {
+				$query_args['tax_query'] = array(
+					array(
+						'taxonomy' => 'rtp-category',
+						'field'    => 'slug',
+						'terms'    => $category,
+					),
+				);
+			}
+
+			$q = new \WP_Query($query_args);
 			if ($q->have_posts()) {
 				while ($q->have_posts()) {
 					$q->the_post();
 					$img = get_post_meta(get_the_ID(), RTP_CPT::META_IMAGE, true);
 					$url = get_post_meta(get_the_ID(), RTP_CPT::META_URL, true);
+
+					// Get categories for this preview
+					$categories = get_the_terms(get_the_ID(), 'rtp-category');
+					$category_slugs = array();
+					if (!is_wp_error($categories) && !empty($categories)) {
+						$category_slugs = wp_list_pluck($categories, 'slug');
+					}
+
 					$items[] = array(
 						'image'     => $img,
 						'title'     => get_the_title(),
@@ -499,6 +1109,8 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 						'btn'       => __('Preview', 'responsive-theme-preview'),
 						'post_id'   => get_the_ID(),
 						'permalink' => get_permalink(),
+						'categories' => $category_slugs,
+						'category_slug' => !empty($category_slugs) ? implode(',', $category_slugs) : '',
 					);
 				}
 				wp_reset_postdata();
@@ -508,14 +1120,17 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 		$bps = array();
 		if (! empty($s['breakpoints'])) {
 			foreach ($s['breakpoints'] as $bp) {
-				$iconUrl = '';
-				if (isset($bp['icon']['url']) && $bp['icon']['url']) {
-					$iconUrl = $bp['icon']['url'];
+				$iconData = array();
+				if (isset($bp['icon'])) {
+					// Handle Elementor icon format: {value: 'fas fa-mobile-alt', library: 'fa-solid'}
+					if (is_array($bp['icon']) && isset($bp['icon']['value'])) {
+						$iconData = $bp['icon'];
+					}
 				}
 				$bps[] = array(
 					'title' => $bp['title'] ?? '',
 					'width' => isset($bp['width']) ? (int) $bp['width'] : 1280,
-					'icon'  => $iconUrl,
+					'icon'  => $iconData,
 				);
 			}
 		}
@@ -525,10 +1140,13 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 
 		// Prepare advanced settings, overriding with Elementor settings if provided
 		$advanced_settings = array(
+			'topbar_height' => isset($s['topbar_height']) ? (int) $s['topbar_height'] : $global_settings['topbar_height'],
 			'device_button_style' => isset($s['device_button_style']) ? $s['device_button_style'] : $global_settings['device_button_style'],
 			'device_button_size' => isset($s['device_button_size']) ? $s['device_button_size'] : $global_settings['device_button_size'],
 			'device_button_active_color' => isset($s['device_button_active_color']) ? $s['device_button_active_color'] : $global_settings['device_button_active_color'],
 			'device_button_hover_color' => isset($s['device_button_hover_color']) ? $s['device_button_hover_color'] : $global_settings['device_button_hover_color'],
+			'device_button_color' => isset($s['device_button_color']) ? $s['device_button_color'] : $global_settings['device_button_color'],
+			'device_icon_color' => isset($s['device_icon_color']) ? $s['device_icon_color'] : $global_settings['device_icon_color'] ?? '#ffffff',
 			'overlay_close_on_click' => isset($s['overlay_close_on_click']) ? ($s['overlay_close_on_click'] === 'yes') : $global_settings['overlay_close_on_click'],
 			'overlay_close_on_esc' => isset($s['overlay_close_on_esc']) ? ($s['overlay_close_on_esc'] === 'yes') : $global_settings['overlay_close_on_esc'],
 			'overlay_loading_indicator' => isset($s['overlay_loading_indicator']) ? ($s['overlay_loading_indicator'] === 'yes') : $global_settings['overlay_loading_indicator'],
@@ -537,7 +1155,12 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 			'focus_outline' => isset($s['focus_outline']) ? ($s['focus_outline'] === 'yes') : $global_settings['focus_outline'],
 			'focus_outline_color' => isset($s['focus_outline_color']) ? $s['focus_outline_color'] : $global_settings['focus_outline_color'],
 			'focus_outline_width' => isset($s['focus_outline_width']) ? (int) $s['focus_outline_width'] : $global_settings['focus_outline_width'],
+			'button_border_radius' => isset($s['card_button_border_radius']) ? (int) $s['card_button_border_radius'] : $global_settings['button_border_radius'] ?? 8,
 		);
+
+		// Use Elementor's built-in icon rendering
+		\Elementor\Plugin::$instance->frontend->enqueue_font('fa-solid');
+		\Elementor\Plugin::$instance->frontend->enqueue_font('fa-regular');
 
 		echo RTP_Render::html(array(
 			'columns'         => (int) ($s['columns'] ?? 3),
@@ -549,6 +1172,9 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 			'breakpoints'    => $bps,
 			'preview_type'   => (($s['source'] ?? '') === 'dynamic') ? ($s['preview_type'] ?? 'popup') : 'popup',
 			'advanced_settings' => $advanced_settings,
+			'enable_category_filter' => $enable_filter,
+			'section_id'      => 'rtp-elementor-' . uniqid(),
+			'use_elementor_icons' => true,
 		));
 	}
 }

@@ -3,14 +3,20 @@
   flex-wrap: wrap;
   gap: 16px;
 }
+.rtp-wrapper {
+  width: 100%;
+}
 .rtp-grid.cols-2 > * {
   flex: 1 1 calc((100% - 16px) / 2);
+  max-width: calc((100% - 16px) / 2);
 }
 .rtp-grid.cols-3 > * {
   flex: 1 1 calc((100% - 32px) / 3);
+  max-width: calc((100% - 32px) / 3);
 }
 .rtp-grid.cols-4 > * {
   flex: 1 1 calc((100% - 48px) / 4);
+  max-width: calc((100% - 48px) / 4);
 }
 .rtp-card {
   border: 1px solid #e5e7eb;
@@ -43,6 +49,17 @@
   color: #fff;
   cursor: pointer;
   z-index: 99;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rtp-btn-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  display: block;
+  font-size: 14px;
+  text-align: center;
 }
 .rtp-open.pos-tr {
   top: 12px;
@@ -114,6 +131,8 @@
   height: 16px;
   object-fit: contain;
   display: block;
+  font-size: 16px;
+  text-align: center;
 }
 
 /* Fallback text icon styles */
@@ -213,20 +232,95 @@ button.rtp-open.pos-center {
   }
   .rtp-grid.cols-2 > * {
     flex: unset;
+    max-width: 100%;
   }
   .rtp-grid.cols-3 > * {
     flex: unset;
+    max-width: 100%;
   }
   .rtp-grid.cols-4 > * {
     flex: unset;
+    max-width: 100%;
   }
 
   .rtp-card {
     width: 100%;
+    max-width: 100%;
   }
 }
 
 /* Popup open state */
 .rtp-popup-open {
   overflow: hidden;
+}
+
+/* Category Filter Styles */
+.rtp-category-filter-wrapper {
+  margin-bottom: 20px;
+}
+
+.rtp-category-filter-wrapper label {
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+.rtp-category-filter-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+.singlecategory-filter.active,
+.singlecategory-filter:hover {
+  background: #0463c8;
+}
+.singlecategory-filter {
+  padding: 5px 15px;
+  background: #0f172a;
+  border-radius: 25px;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+.rtp-category-filter {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #374151;
+  font-size: 14px;
+  min-width: 200px;
+  transition: border-color 0.2s ease;
+}
+
+.rtp-category-filter:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.rtp-filter-count {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* Responsive styles for category filter */
+@media (max-width: 768px) {
+  .rtp-category-filter-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rtp-category-filter {
+    width: 100%;
+    min-width: auto;
+  }
 }

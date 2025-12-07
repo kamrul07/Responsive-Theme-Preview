@@ -31,6 +31,10 @@ class RTP_Advanced_Settings {
 			'overlay_loading_indicator' => true,
 			'overlay_loading_color' => '#2563eb',
 
+			// CTA button settings
+			'cta_button_bg_color' => '#2563eb',
+			'cta_button_color' => '#ffffff',
+
 			// Preview settings
 			'preview_start_with_device' => 'desktop', // desktop, tablet, mobile
 			'preview_zoom_level' => 1.0,
@@ -75,6 +79,11 @@ class RTP_Advanced_Settings {
 			// Developer settings
 			'debug_mode' => false,
 			'log_events' => false,
+
+			// Filtering settings
+			'enable_preview_filtering' => true,
+			'filter_by_category' => true,
+			'show_filter_count' => true,
 		);
 	}
 
@@ -104,6 +113,9 @@ class RTP_Advanced_Settings {
 				case 'focus_outline':
 				case 'debug_mode':
 				case 'log_events':
+				case 'enable_preview_filtering':
+				case 'filter_by_category':
+				case 'show_filter_count':
 					$sanitized[$key] = (bool) $value;
 					break;
 
@@ -125,6 +137,8 @@ class RTP_Advanced_Settings {
 				case 'device_button_hover_color':
 				case 'overlay_loading_color':
 				case 'focus_outline_color':
+				case 'cta_button_bg_color':
+				case 'cta_button_color':
 					// Handle both string and array color values from Bricks
 					if (is_array($value) && isset($value['hex'])) {
 						$sanitized[$key] = sanitize_hex_color($value['hex']);
@@ -217,9 +231,12 @@ class RTP_Advanced_Settings {
 				break;
 		}
 
-		// Note: Button colors are now handled by Bricks CSS controls
+		// Note: Device button colors are now handled by Bricks CSS controls
 		// $css .= ".rtp-devices button:hover { background: {$settings['device_button_hover_color']}; }\n";
 		// $css .= ".rtp-devices button.active { background: {$settings['device_button_active_color']}; }\n";
+
+		// CTA button colors
+		$css .= ".rtp-cta { background: {$settings['cta_button_bg_color']}; color: {$settings['cta_button_color']}; }\n";
 
 		// Topbar height settings
 		if ($settings['topbar_height'] !== 52) {

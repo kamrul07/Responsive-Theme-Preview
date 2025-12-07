@@ -1,6 +1,15 @@
-(function () {
+// Ensure jQuery is loaded and available
+(function ($) {
+  "use strict";
+
+  // Fallback to vanilla JavaScript if jQuery not available
   function $$(s, c) {
-    return Array.prototype.slice.call((c || document).querySelectorAll(s));
+    if (typeof $ !== "undefined") {
+      return Array.prototype.slice.call((c || document).querySelectorAll(s));
+    } else {
+      // Vanilla JavaScript fallback
+      return Array.prototype.slice.call(document.querySelectorAll(s));
+    }
   }
   var ov, frame, closeBtn, cta, titleEl;
   var currentDeviceIndex = 0;
@@ -213,4 +222,41 @@
       }
     } catch (e) {}
   }
-})();
+
+  function previewFiltering(cat, parent) {
+    var category = cat;
+    var previews = $(parent).find(".rtp-card");
+    console.log(previews);
+
+    $(".rtp-card", parent).each(function () {
+      var $card = $(this);
+      var cardCategories = $card.data("category");
+      if (cardCategories) {
+        var categories = cardCategories.split(",");
+        console.log(category);
+        if (category === "" || categories.includes(category)) {
+          $card.show();
+        } else {
+          $card.hide();
+        }
+      }
+    });
+
+    // Update active state for category filter buttons
+    var filterButtons = document.querySelectorAll(".singlecategory-filter");
+    filterButtons.forEach(function (btn) {
+      var btnCategory = btn.getAttribute("data-cat");
+      if (btnCategory === category) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+  }
+
+  $(document).on("click", ".singlecategory-filter", function () {
+    var parent = $(this).closest(".rtp-wrapper");
+    var category = $(this).attr("data-cat");
+    previewFiltering(category, parent);
+  });
+})(jQuery);

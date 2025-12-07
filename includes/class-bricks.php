@@ -15,11 +15,38 @@ class RTP_Bricks_Element extends \Bricks\Element {
 	public function get_label() {
 		return esc_html__('Responsive Preview', 'responsive-theme-preview');
 	}
+
+	/**
+	 * Get category options for select control
+	 */
+	public static function get_category_options() {
+		$options = array(
+			'' => esc_html__('All Categories', 'responsive-theme-preview'),
+		);
+
+		$categories = get_terms(array(
+			'taxonomy' => 'rtp-category',
+			'hide_empty' => true,
+		));
+
+		if (!is_wp_error($categories) && !empty($categories)) {
+			foreach ($categories as $category) {
+				$options[$category->slug] = $category->name;
+			}
+		}
+
+		return $options;
+	}
 	public function set_control_groups() {
 
 		// Group shown when “Card” tab is active
 		$this->control_groups['card'] = [
 			'title' => esc_html__('Card style', 'responsive-theme-preview'),
+			'tab'   => 'content',
+		];
+		// Group shown when “Filter” tab is active
+		$this->control_groups['filter'] = [
+			'title' => esc_html__('Filter style', 'responsive-theme-preview'),
 			'tab'   => 'content',
 		];
 
@@ -80,6 +107,23 @@ class RTP_Bricks_Element extends \Bricks\Element {
 				'page'  => 'Separate URL',
 			),
 			'default'  => 'popup',
+			'required' => array('source', '=', 'dynamic'),
+		);
+
+		$this->controls['category_filter'] = array(
+			'tab'      => 'content',
+			'label'    => esc_html__('Filter by Category', 'responsive-theme-preview'),
+			'type'     => 'select',
+			'options'  => self::get_category_options(),
+			'default'  => '',
+			'required' => array('source', '=', 'dynamic'),
+		);
+
+		$this->controls['enable_category_filter'] = array(
+			'tab'      => 'content',
+			'label'    => esc_html__('Enable Frontend Category Filter', 'responsive-theme-preview'),
+			'type'     => 'checkbox',
+			'default'  => false,
 			'required' => array('source', '=', 'dynamic'),
 		);
 
@@ -304,6 +348,316 @@ class RTP_Bricks_Element extends \Bricks\Element {
 
 		];
 
+		$this->controls['card_button_border_radius'] = array(
+			'tab'     => 'content',
+			'group'    => 'card',
+			'label'     => esc_html__('Button Border Radius (px)', 'responsive-theme-preview'),
+			'type'      => 'number',
+			'default'   => 8,
+			'min'       => 0,
+			'max'       => 50,
+			'css' => [
+				[
+					'property' => 'border-radius',
+					'selector' => '.rtp-open',
+				]
+			],
+		);
+
+		//filter settings
+
+		// $this->controls['filterDisplay'] = [
+		// 	'tab' => 'content',
+		// 	'label' => esc_html__('Display', 'responsive-theme-preview'),
+		// 	'type' => 'select',
+		// 	'group' => 'filter',
+		// 	'options' => [
+		// 		'block' => esc_html__('Block', 'responsive-theme-preview'),
+		// 		'inline-block' => esc_html__('Inline Block', 'responsive-theme-preview'),
+		// 		'flex' => esc_html__('Flex', 'responsive-theme-preview'),
+		// 		'inline-flex' => esc_html__('Inline Flex', 'responsive-theme-preview'),
+		// 	],
+		// 	'inline' => true,
+		// 	'css' => [
+		// 		[
+		// 			'property' => 'display',
+		// 			'selector' => '.rtp-category-filter-inner',
+		// 		],
+		// 	],
+		// 	'placeholder' => esc_html__('Select', 'responsive-theme-preview'),
+		// 	'default' => 'flex',
+		// ];
+
+		$this->controls['filterWidth'] = array(
+			'tab'     => 'content',
+			'group'    => 'filter',
+			'label'     => esc_html__('Single filter width', 'responsive-theme-preview'),
+			'type'      => 'number',
+			'default'   => "auto",
+			'css' => [
+				[
+					'property' => 'width',
+					'selector' => '.singlecategory-filter',
+				]
+			],
+		);
+
+		$this->controls['directionFilter'] = [
+			'tab'   => 'content',
+			'group' => 'filter',
+			'label' => esc_html__('Direction', 'responsive-theme-preview'),
+			'type'  => 'direction',
+			'css'   => [
+				[
+					'property' => 'flex-direction',
+					'selector' => '.rtp-category-filter-inner',
+
+				],
+			],
+		];
+		$this->controls['alignItemsFilter'] = [
+			'tab'   => 'content',
+			'group' => 'filter',
+			'label' => esc_html__('Align items', 'responsive-theme-preview'),
+			'type'  => 'align-items',
+			'css'   => [
+				[
+					'property' => 'align-items',
+					'selector' => '.rtp-category-filter-inner',
+				],
+			],
+		];
+		$this->controls['justifyContentFilter'] = [
+			'tab'   => 'content',
+			'group' => 'filter',
+			'label' => esc_html__('Justify content', 'responsive-theme-previewbricks'),
+			'type'  => 'justify-content',
+			'css'   => [
+				[
+					'property' => 'justify-content',
+					'selector' => '.rtp-category-filter-inner',
+				],
+			],
+		];
+		$this->controls['gapfilter'] = array(
+			'tab'     => 'content',
+			'group'    => 'filter',
+			'label'     => esc_html__('Gap Between Filters', 'responsive-theme-preview'),
+			'type'      => 'number',
+			'default'   => "10px",
+			'css' => [
+				[
+					'property' => 'gap',
+					'selector' => '.rtp-category-filter-inner',
+				]
+			],
+		);
+		$this->controls['filterWrap'] = [
+			'tab' => 'content',
+			'group' => "filter",
+			'label' => esc_html__('Flex wrap', 'responsive-theme-preview'),
+			'type' => 'select',
+			'options' => [
+				'no-wrap' => esc_html__('No Wrap', 'responsive-theme-preview'),
+				'wrap' => esc_html__('Wrap', 'responsive-theme-preview'),
+			],
+			'inline' => true,
+			'css' => [
+				[
+					'property' => 'flex-wrap',
+					'selector' => '.rtp-category-filter-inner',
+				],
+			],
+			'default' => 'no-wrap',
+		];
+		$this->controls['filter_title_typography'] = [
+			'tab' => 'content',
+			'group' => 'filter',
+			'label' => esc_html__('Typography', 'responsive-theme-preview'),
+			'type' => 'typography',
+			'css' => [
+				[
+					'property' => 'typography',
+					'selector' => '.singlecategory-filter',
+				],
+			],
+			'inline' => true,
+		];
+
+		$this->controls['filter_title_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'filter',
+			'label'     => esc_html__('Filter item Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#ffffff',
+			'css' => [
+				[
+					'property' => 'color',
+					'selector' => '.singlecategory-filter',
+				]
+			],
+		);
+		$this->controls['filter_bg_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'filter',
+			'label'     => esc_html__('Background', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#0f172a',
+			'css' => [
+				[
+					'property' => 'background',
+					'selector' => '.singlecategory-filter',
+				]
+			],
+		);
+		$this->controls['filterBorder'] = [
+			'tab' => 'content',
+			'group' => 'filter',
+			'label' => esc_html__('Border', 'responsive-theme-preview'),
+			'type' => 'border',
+			'css' => [
+				[
+					'property' => 'border',
+					'selector' => '.singlecategory-filter',
+				],
+			],
+			'inline' => true,
+			'small' => true,
+			'default' => [
+				'width' => [
+					'top' => 1,
+					'right' => 1,
+					'bottom' => 1,
+					'left' => 0,
+				],
+				'style' => 'solid',
+				'color' => [
+					'hex' => '#0f172a',
+				],
+				'radius' => [
+					'top' => 20,
+					'right' => 20,
+					'bottom' => 20,
+					'left' => 20,
+				],
+			],
+		];
+		$this->controls['filterPadding'] = [
+			'tab' => 'content',
+			'group' => 'filter',
+			'label' => esc_html__('Padding', 'responsive-theme-preview'),
+			'type' => 'dimensions',
+			'css' => [
+				[
+					'property' => 'padding',
+					'selector' => '.singlecategory-filter',
+				]
+			],
+			'default' => [
+				'top' => '5px',
+				'right' => '10px',
+				'bottom' => '5px',
+				'left' => '10px',
+			],
+		];
+		$this->controls['advanced_heading_filter'] = array(
+			'tab'   => 'content',
+			'group'  => 'filter',
+			'label'  => esc_html__('Active', 'responsive-theme-preview'),
+			'type'   => 'separator',
+		);
+
+		$this->controls['filter_title_color_active'] = array(
+			'tab'     => 'content',
+			'group'    => 'filter',
+			'label'     => esc_html__('Font Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#ffffff',
+			'css' => [
+				[
+					'property' => 'color',
+					'selector' => '.singlecategory-filter.active',
+				]
+			],
+		);
+
+		$this->controls['active_bg_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'filter',
+			'label'     => esc_html__('Background', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#0463c8',
+			'css' => [
+				[
+					'property' => 'background',
+					'selector' => '.singlecategory-filter.active',
+				]
+			],
+		);
+		$this->controls['filterBorderActive'] = [
+			'tab' => 'content',
+			'label' => esc_html__('Border', 'responsive-theme-preview'),
+			'type' => 'border',
+			'css' => [
+				[
+					'property' => 'border',
+					'selector' => '.singlecategory-filter.active',
+				],
+			],
+			'inline' => true,
+			'small' => true,
+			'default' => [
+				'width' => [
+					'top' => 1,
+					'right' => 1,
+					'bottom' => 1,
+					'left' => 0,
+				],
+				'style' => 'solid',
+				'color' => [
+					'hex' => '#0463c8',
+				],
+				'radius' => [
+					'top' => 20,
+					'right' => 20,
+					'bottom' => 20,
+					'left' => 20,
+				],
+			],
+		];
+		$this->controls['filterBorderActive'] = [
+			'tab' => 'content',
+			'group' => 'filter',
+			'label' => esc_html__('Border', 'responsive-theme-preview'),
+			'type' => 'border',
+			'css' => [
+				[
+					'property' => 'border',
+					'selector' => '.singlecategory-filter.active',
+				],
+			],
+			'inline' => true,
+			'small' => true,
+			'default' => [
+				'width' => [
+					'top' => 1,
+					'right' => 1,
+					'bottom' => 1,
+					'left' => 0,
+				],
+				'style' => 'solid',
+				'color' => [
+					'hex' => '#0f172a',
+				],
+				'radius' => [
+					'top' => 20,
+					'right' => 20,
+					'bottom' => 20,
+					'left' => 20,
+				],
+			],
+		];
+		//topbar settings
 		$this->controls['advanced_heading_general'] = array(
 			'tab'   => 'content',
 			'group'  => 'topbar',
@@ -318,7 +672,6 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			'type'      => 'number',
 			'default'   => 52,
 			'min'       => 40,
-			'max'       => 100,
 			'css' => [
 				[
 					'property' => 'height',
@@ -434,6 +787,20 @@ class RTP_Bricks_Element extends \Bricks\Element {
 				]
 			],
 		);
+
+		$this->controls['device_icon_color'] = array(
+			'tab'     => 'content',
+			'group'    => 'topbar',
+			'label'     => esc_html__('Device Icon Color', 'responsive-theme-preview'),
+			'type'      => 'color',
+			'default'   => '#ffffff',
+			'css' => [
+				[
+					'property' => 'color',
+					'selector' => '.rtp-devices button i',
+				]
+			],
+		);
 		$this->controls['buttonDevice'] = [
 			'tab'   => 'content',
 			'group' => 'topbar',
@@ -446,10 +813,10 @@ class RTP_Bricks_Element extends \Bricks\Element {
 				]
 			],
 			'default' => [
-				'top' => '6px',
-				'right' => '10px',
-				'bottom' => '6px',
-				'left' => '10px',
+				'top' => '10px',
+				'right' => '15px',
+				'bottom' => '10px',
+				'left' => '15px',
 			],
 		];
 		$this->controls['devicebuttonBorder'] = [
@@ -701,17 +1068,40 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			}
 		} else {
 			$count = isset($s['dynamic_count']) ? (int)$s['dynamic_count'] : 6;
-			$q     = new \WP_Query(array(
+			$category = isset($s['category_filter']) ? $s['category_filter'] : '';
+			$enable_filter = isset($s['enable_category_filter']) ? $s['enable_category_filter'] : false;
+
+			$query_args = array(
 				'post_type'      => RTP_CPT::POST_TYPE,
 				'posts_per_page' => $count,
 				'no_found_rows'  => true,
 				'post_status'    => 'publish',
-			));
+			);
+
+			// Add category filter if specified
+			if (!empty($category)) {
+				$query_args['tax_query'] = array(
+					array(
+						'taxonomy' => 'rtp-category',
+						'field'    => 'slug',
+						'terms'    => $category,
+					),
+				);
+			}
+
+			$q = new \WP_Query($query_args);
 			if ($q->have_posts()) {
 				while ($q->have_posts()) {
 					$q->the_post();
 					$img = get_post_meta(get_the_ID(), RTP_CPT::META_IMAGE, true);
 					$url = get_post_meta(get_the_ID(), RTP_CPT::META_URL, true);
+					// Get categories for this preview
+					$categories = get_the_terms(get_the_ID(), 'rtp-category');
+					$category_slugs = array();
+					if (!is_wp_error($categories) && !empty($categories)) {
+						$category_slugs = wp_list_pluck($categories, 'slug');
+					}
+
 					$items[] = array(
 						'image'     => $img,
 						'title'     => get_the_title(),
@@ -719,6 +1109,8 @@ class RTP_Bricks_Element extends \Bricks\Element {
 						'btn'       => __('Preview', 'responsive-theme-preview'),
 						'post_id'   => get_the_ID(),
 						'permalink' => get_permalink(),
+						'categories' => $category_slugs,
+						'category_slug' => !empty($category_slugs) ? implode(',', $category_slugs) : '',
 					);
 				}
 				wp_reset_postdata();
@@ -780,6 +1172,7 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			'device_button_size' => isset($s['device_button_size']) ? $s['device_button_size'] : $global_settings['device_button_size'],
 			'device_button_active_color' => isset($s['device_button_active_color']) ? $s['device_button_active_color'] : $global_settings['device_button_active_color'],
 			'device_button_hover_color' => isset($s['device_button_hover_color']) ? $s['device_button_hover_color'] : $global_settings['device_button_hover_color'],
+			'device_icon_color' => isset($s['device_icon_color']) ? $s['device_icon_color'] : $global_settings['device_icon_color'] ?? '#ffffff',
 			'overlay_close_on_click' => isset($s['overlay_close_on_click']) ? ($s['overlay_close_on_click'] === true) : $global_settings['overlay_close_on_click'],
 			'overlay_close_on_esc' => isset($s['overlay_close_on_esc']) ? ($s['overlay_close_on_esc'] === true) : $global_settings['overlay_close_on_esc'],
 			'overlay_loading_indicator' => isset($s['overlay_loading_indicator']) ? ($s['overlay_loading_indicator'] === true) : $global_settings['overlay_loading_indicator'],
@@ -788,15 +1181,14 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			'focus_outline' => isset($s['focus_outline']) ? ($s['focus_outline'] === true) : $global_settings['focus_outline'],
 			'focus_outline_color' => isset($s['focus_outline_color']) ? $s['focus_outline_color'] : $global_settings['focus_outline_color'],
 			'focus_outline_width' => isset($s['focus_outline_width']) ? (int) $s['focus_outline_width'] : $global_settings['focus_outline_width'],
+			'button_border_radius' => isset($s['card_button_border_radius']) ? (int) $s['card_button_border_radius'] : $global_settings['button_border_radius'] ?? 8,
 		);
 
-		echo "<div id='" . esc_attr($section_id) . "'>";
-		echo "";
+		echo "<div id='" . esc_attr($section_id) . "' >";
+
 		echo "<style>#$section_id #rtp-frame {
 				height: calc(100vh - " . esc_attr($s['topbar_height'] ?? 3) . ");
 			}</style>";
-		echo "";
-
 		echo RTP_Render::html(array(
 			'columns'         => (int)($s['columns'] ?? 3),
 			'overlay_bg'      => $s['overlay_bg'] ?? 'rgba(0,0,0,.6)',
@@ -807,6 +1199,8 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			'breakpoints'     => $bps,
 			'preview_type'    => (($s['source'] ?? '') === 'dynamic') ? ($s['preview_type'] ?? 'popup') : 'popup',
 			'advanced_settings' => $advanced_settings,
+			'enable_category_filter' => $enable_filter,
+			'section_id'      => $section_id,
 		));
 		echo "</div>";
 	}
