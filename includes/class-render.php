@@ -20,15 +20,14 @@ class RTP_Render {
 		// Get global settings to use default breakpoints if not set in shortcode
 		$global_settings = RTP_Admin_Settings::get_settings();
 
-		$bps = (isset($args['breakpoints']) && is_array($args['breakpoints'])) ? array_map(function ($bp) {
-			return array_map('sanitize_text_field', $bp);
-		}, $args['breakpoints']) : (isset($global_settings['default_breakpoints']) && !empty($global_settings['default_breakpoints']) ? $global_settings['default_breakpoints'] : array(
+		$bps = (isset($args['breakpoints']) && is_array($args['breakpoints'])) ? $args['breakpoints'] : (isset($global_settings['default_breakpoints']) && !empty($global_settings['default_breakpoints']) ? $global_settings['default_breakpoints'] : array(
 			array('title' => 'Mobile', 'width' => 375, 'icon' => array('value' => 'fas fa-mobile-alt', 'library' => 'fa-solid')),
 			array('title' => 'Tablet', 'width' => 768, 'icon' => array('value' => 'fas fa-tablet-alt', 'library' => 'fa-solid')),
 			array('title' => 'Desktop', 'width' => 1280, 'icon' => array('value' => 'fas fa-desktop', 'library' => 'fa-solid')),
 		));
 
 		$bps_json = esc_attr(rawurlencode(wp_json_encode($bps)));
+
 
 		// Always use global settings from admin settings page
 		$advanced_settings = RTP_Admin_Settings::get_settings();
@@ -115,7 +114,7 @@ class RTP_Render {
 										$iconUrl = esc_url($iconVal['src']);
 									} elseif (!empty($iconVal['value'])) {
 										// Elementor icon format: {value: 'fas fa-eye', library: 'fa-solid'}
-										$iconClass = esc_attr($iconVal['value']);
+										$iconClass = $iconVal['value'];
 									} elseif (!empty($iconVal['icon'])) {
 										// Nested icon format: {icon: 'ti-desktop'}
 										$iconClass = esc_attr($iconVal['icon']);
@@ -127,26 +126,41 @@ class RTP_Render {
 									$iconClass = esc_attr($iconVal);
 								}
 							?>
+
                     <button data-w="<?php echo (int) $w; ?>" title="<?php echo esc_attr($t); ?>">
                         <?php if ($iconUrl) : ?>
                         <img class="rtp-ic" src="<?php echo esc_attr($iconUrl); ?>" alt="<?php echo esc_attr($t); ?>" />
                         <?php elseif ($iconClass) : ?>
-                        <?php if (isset($args['use_elementor_icons']) && $args['use_elementor_icons']) : ?>
                         <?php
-											// Use Elementor's icon rendering for Elementor pages
+										// Use Elementor's icon rendering for Elementor pages
+										if (isset($args['use_elementor_icons']) && $args['use_elementor_icons'] && class_exists('\Elementor\Icons_Manager')) {
+											// Extract library from iconClass if it contains library info
+											$library = 'fa-solid';
+											if (strpos($iconClass, 'fa-regular') !== false) {
+												$library = 'fa-regular';
+											} elseif (strpos($iconClass, 'fa-brands') !== false) {
+												$library = 'fa-brands';
+											}
+
 											$icon_settings = array(
-												'library' => 'fa-solid',
+												'library' => $library,
 												'value' => $iconClass
 											);
 											$icon_html = \Elementor\Icons_Manager::render_icon($icon_settings, array('aria-hidden' => 'true'));
-											// Extract just the SVG part from the returned HTML
-											if (preg_match('/<i[^>]*>(.*?)<\/i>/s', $icon_html, $matches)) {
-												echo wp_kses_post($matches[0]);
+											// Check if icon was successfully rendered (non-empty output)
+											if (!empty($icon_html)) {
+												// Output the full icon HTML (which may include SVG or i tag)
+												//echo wp_kses_post($icon_html);
+
+											} else {
+												// Fallback to simple font icon if Elementor icon wasn't rendered
+												echo '<i class="' . esc_attr($iconClass) . '" aria-hidden="true"></i>';
 											}
-											?>
-                        <?php else : ?>
-                        <i class="rtp-ic <?php echo esc_attr($iconClass); ?>"></i>
-                        <?php endif; ?>
+										} else {
+											// Fallback to simple font icon if Elementor is not available
+											echo '<i class="' . esc_attr($iconClass) . '" aria-hidden="true"></i>';
+										}
+										?>
                         <?php else : ?>
                         <span class="rtp-ic"><?php echo esc_html($t ? substr($t, 0, 1) : '•'); ?></span>
                         <?php endif; ?>
