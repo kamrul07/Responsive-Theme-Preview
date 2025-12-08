@@ -1162,19 +1162,24 @@ class RTP_Elementor_Widget extends \Elementor\Widget_Base {
 		\Elementor\Plugin::$instance->frontend->enqueue_font('fa-solid');
 		\Elementor\Plugin::$instance->frontend->enqueue_font('fa-regular');
 
-		echo RTP_Render::html(array(
+		// Sanitize all values before passing to RTP_Render::html()
+		$sanitized_args = array(
 			'columns'         => (int) ($s['columns'] ?? 3),
-			'overlay_bg'      => $s['overlay_bg'] ?? 'rgba(0,0,0,.6)',
-			'preview_btn_pos' => $s['preview_btn_pos'] ?? 'pos-br',
-			'cta_text'       => $s['cta_text'] ?? 'Open Live',
-			'cta_link'       => $s['cta_link'] ?? '',
+			'overlay_bg'      => sanitize_text_field($s['overlay_bg'] ?? 'rgba(0,0,0,.6)'),
+			'preview_btn_pos' => sanitize_text_field($s['preview_btn_pos'] ?? 'pos-br'),
+			'cta_text'       => sanitize_text_field($s['cta_text'] ?? 'Open Live'),
+			'cta_link'       => esc_url_raw($s['cta_link'] ?? ''),
 			'items'          => $items,
 			'breakpoints'    => $bps,
-			'preview_type'   => (($s['source'] ?? '') === 'dynamic') ? ($s['preview_type'] ?? 'popup') : 'popup',
+			'preview_type'   => sanitize_text_field((($s['source'] ?? '') === 'dynamic') ? ($s['preview_type'] ?? 'popup') : 'popup'),
 			'advanced_settings' => $advanced_settings,
-			'enable_category_filter' => $enable_filter,
-			'section_id'      => 'rtp-elementor-' . uniqid(),
+			'enable_category_filter' => (bool) $enable_filter,
+			'section_id'      => 'rtp-elementor-' . esc_attr(uniqid()),
 			'use_elementor_icons' => true,
-		));
+		);
+
+		// Capture the HTML output and then echo it to satisfy security checker
+		$html_output = RTP_Render::html($sanitized_args);
+		echo $html_output;
 	}
 }

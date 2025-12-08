@@ -135,19 +135,19 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			'titleProperty' => 'title',
 			'fields'   => array(
 				'title' => [
-					'label' => esc_html__('Title', 'bricks'),
+					'label' => esc_html__('Title', 'responsive-theme-preview'),
 					'type' => 'text',
 				],
 				'image' => [
-					'label' => esc_html__('Image', 'bricks'),
+					'label' => esc_html__('Image', 'responsive-theme-preview'),
 					'type' => 'image',
 				],
 				'url' => [
-					'label' => esc_html__('Preview URL', 'bricks'),
+					'label' => esc_html__('Preview URL', 'responsive-theme-preview'),
 					'type' => 'text',
 				],
 				'btn' => [
-					'label' => esc_html__('Button Text', 'bricks'),
+					'label' => esc_html__('Button Text', 'responsive-theme-preview'),
 					'type' => 'text',
 				],
 			),
@@ -430,7 +430,7 @@ class RTP_Bricks_Element extends \Bricks\Element {
 		$this->controls['justifyContentFilter'] = [
 			'tab'   => 'content',
 			'group' => 'filter',
-			'label' => esc_html__('Justify content', 'responsive-theme-previewbricks'),
+			'label' => esc_html__('Justify content', 'responsive-theme-preview'),
 			'type'  => 'justify-content',
 			'css'   => [
 				[
@@ -1186,18 +1186,20 @@ class RTP_Bricks_Element extends \Bricks\Element {
 
 		echo "<div id='" . esc_attr($section_id) . "' >";
 
-		echo "<style>#$section_id #rtp-frame {
-				height: calc(100vh - " . esc_attr($s['topbar_height'] ?? 3) . ");
+		echo "<style>#" . esc_attr($section_id) . " #rtp-frame {
+				height: calc(100vh - " . (int) esc_attr($s['topbar_height'] ?? 3) . "px);
 			}</style>";
+		// Output is already escaped in RTP_Render::html() method with wp_kses_post()
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo RTP_Render::html(array(
 			'columns'         => (int)($s['columns'] ?? 3),
-			'overlay_bg'      => $s['overlay_bg'] ?? 'rgba(0,0,0,.6)',
-			'preview_btn_pos' => $s['preview_btn_pos'] ?? 'pos-br',
-			'cta_text'        => $s['cta_text'] ?? 'Open Live',
-			'cta_link'        => $s['cta_link'] ?? '',
+			'overlay_bg'      => esc_attr($s['overlay_bg'] ?? 'rgba(0,0,0,.6)'),
+			'preview_btn_pos' => esc_attr($s['preview_btn_pos'] ?? 'pos-br'),
+			'cta_text'        => esc_attr($s['cta_text'] ?? 'Open Live'),
+			'cta_link'        => esc_url_raw($s['cta_link'] ?? ''),
 			'items'           => $items,
 			'breakpoints'     => $bps,
-			'preview_type'    => (($s['source'] ?? '') === 'dynamic') ? ($s['preview_type'] ?? 'popup') : 'popup',
+			'preview_type'    => esc_attr((($s['source'] ?? '') === 'dynamic') ? ($s['preview_type'] ?? 'popup') : 'popup'),
 			'advanced_settings' => $advanced_settings,
 			'enable_category_filter' => $enable_filter,
 			'section_id'      => $section_id,

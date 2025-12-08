@@ -455,21 +455,21 @@ class RTP_Admin_Settings {
 
                                     foreach ($breakpoints as $index => $breakpoint) :
                                     ?>
-                            <div class="rtp-breakpoint-item" data-index="<?php echo $index; ?>">
+                            <div class="rtp-breakpoint-item" data-index="<?php echo esc_attr($index); ?>">
                                 <div class="rtp-breakpoint-fields">
                                     <div class="rtp-field-row">
                                         <label><?php esc_html_e('Title', 'responsive-theme-preview'); ?></label>
-                                        <input type="text" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo $index; ?>][title]" value="<?php echo esc_attr($breakpoint['title']); ?>" placeholder="<?php esc_attr_e('Desktop', 'responsive-theme-preview'); ?>" />
+                                        <input type="text" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo esc_attr($index); ?>][title]" value="<?php echo esc_attr($breakpoint['title']); ?>" placeholder="<?php esc_attr_e('Desktop', 'responsive-theme-preview'); ?>" />
                                     </div>
                                     <div class="rtp-field-row">
                                         <label><?php esc_html_e('Width (px)', 'responsive-theme-preview'); ?></label>
-                                        <input type="number" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo $index; ?>][width]" value="<?php echo esc_attr($breakpoint['width']); ?>" min="320" max="2560" />
+                                        <input type="number" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo esc_attr($index); ?>][width]" value="<?php echo esc_attr($breakpoint['width']); ?>" min="320" max="2560" />
                                     </div>
                                     <div class="rtp-field-row">
                                         <label><?php esc_html_e('Icon Image', 'responsive-theme-preview'); ?></label>
                                         <div class="rtp-media-uploader">
-                                            <input type="text" class="rtp-media-input" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo $index; ?>][icon]" value="<?php echo esc_attr($breakpoint['icon']); ?>" placeholder="<?php esc_attr_e('Enter image URL or click to upload', 'responsive-theme-preview'); ?>" />
-                                            <button type="button" class="button rtp-media-upload-button" data-target="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo $index; ?>][icon]"><?php esc_html_e('Upload', 'responsive-theme-preview'); ?></button>
+                                            <input type="text" class="rtp-media-input" name="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo esc_attr($index); ?>][icon]" value="<?php echo esc_attr($breakpoint['icon']); ?>" placeholder="<?php esc_attr_e('Enter image URL or click to upload', 'responsive-theme-preview'); ?>" />
+                                            <button type="button" class="button rtp-media-upload-button" data-target="<?php echo esc_attr(self::OPTION_NAME); ?>[default_breakpoints][<?php echo (int) $index; ?>][icon]"><?php esc_html_e('Upload', 'responsive-theme-preview'); ?></button>
                                             <?php if (!empty($breakpoint['icon'])) : ?>
                                             <div class="rtp-media-preview">
                                                 <img src="<?php echo esc_url($breakpoint['icon']); ?>" alt="<?php esc_attr_e('Icon Preview', 'responsive-theme-preview'); ?>" style="max-width: 30px; max-height: 30px; vertical-align: middle;" />
@@ -794,7 +794,7 @@ jQuery(document).ready(function($) {
                 type: 'POST',
                 data: {
                     action: 'rtp_reset_settings',
-                    nonce: '<?php echo wp_create_nonce('rtp_reset_settings'); ?>'
+                    nonce: '<?php echo esc_js(wp_create_nonce('rtp_reset_settings')); ?>'
                 },
                 success: function(response) {
                     if (response.success) {

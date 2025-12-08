@@ -1,4 +1,11 @@
-# Responsive Theme Preview Plugin
+=== Responsive Theme Preview ===
+Contributors: Kamrul Hasan
+Tags: preview, responsive, theme, elementor, gutenberg, bricks
+Requires at least: 5.2
+Tested up to: 6.9
+Stable tag: 1.0.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 A WordPress plugin for previewing templates in responsive frames (popup or separate page). Works with Elementor, Gutenberg, Bricks, and shortcode.
 

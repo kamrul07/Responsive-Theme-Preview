@@ -6,19 +6,23 @@ if (! defined('ABSPATH')) {
 class RTP_Render {
 	public static function html($args) {
 		$columns         = isset($args['columns']) ? (int) $args['columns'] : 3;
-		$overlay_bg      = isset($args['overlay_bg']) ? $args['overlay_bg'] : 'rgba(0,0,0,.6)';
+		$overlay_bg      = isset($args['overlay_bg']) ? sanitize_text_field($args['overlay_bg']) : 'rgba(0,0,0,.6)';
 
-		$preview_btn_pos = isset($args['preview_btn_pos']) ? $args['preview_btn_pos'] : 'pos-br';
-		$cta_text        = (isset($args['cta_text']) && '' !== $args['cta_text']) ? $args['cta_text'] : __('Open Live', 'responsive-theme-preview');
-		$cta_link        = isset($args['cta_link']) ? $args['cta_link'] : '';
-		$section_id       = isset($args['section_id']) ? $args['section_id'] : 'rtp-preview-' . uniqid();
-		$preview_type    = isset($args['preview_type']) ? $args['preview_type'] : 'popup';
+		$preview_btn_pos = isset($args['preview_btn_pos']) ? sanitize_text_field($args['preview_btn_pos']) : 'pos-br';
+		$cta_text        = (isset($args['cta_text']) && '' !== $args['cta_text']) ? sanitize_text_field($args['cta_text']) : __('Open Live', 'responsive-theme-preview');
+		$cta_link        = isset($args['cta_link']) ? esc_url_raw($args['cta_link']) : '';
+		$section_id       = isset($args['section_id']) ? sanitize_text_field($args['section_id']) : 'rtp-preview-' . uniqid();
+		$preview_type    = isset($args['preview_type']) ? sanitize_text_field($args['preview_type']) : 'popup';
 
-		$items = (isset($args['items']) && is_array($args['items'])) ? $args['items'] : array();
+		$items = (isset($args['items']) && is_array($args['items'])) ? array_map(function ($item) {
+			return array_map('sanitize_text_field', $item);
+		}, $args['items']) : array();
 		// Get global settings to use default breakpoints if not set in shortcode
 		$global_settings = RTP_Admin_Settings::get_settings();
 
-		$bps = (isset($args['breakpoints']) && is_array($args['breakpoints'])) ? $args['breakpoints'] : (isset($global_settings['default_breakpoints']) && !empty($global_settings['default_breakpoints']) ? $global_settings['default_breakpoints'] : array(
+		$bps = (isset($args['breakpoints']) && is_array($args['breakpoints'])) ? array_map(function ($bp) {
+			return array_map('sanitize_text_field', $bp);
+		}, $args['breakpoints']) : (isset($global_settings['default_breakpoints']) && !empty($global_settings['default_breakpoints']) ? $global_settings['default_breakpoints'] : array(
 			array('title' => 'Mobile', 'width' => 375, 'icon' => array('value' => 'fas fa-mobile-alt', 'library' => 'fa-solid')),
 			array('title' => 'Tablet', 'width' => 768, 'icon' => array('value' => 'fas fa-tablet-alt', 'library' => 'fa-solid')),
 			array('title' => 'Desktop', 'width' => 1280, 'icon' => array('value' => 'fas fa-desktop', 'library' => 'fa-solid')),
@@ -44,7 +48,7 @@ class RTP_Render {
 		ob_start();
 ?>
 <style>
-<?php echo $advanced_css;
+<?php echo wp_kses_post($advanced_css);
 ?>
 </style>
 <div class='rtp-wrapper'>
@@ -78,8 +82,8 @@ class RTP_Render {
         <div class="rtp-card <?php echo esc_attr($preview_btn_pos); ?>" <?php echo isset($it['category_slug']) && !empty($it['category_slug']) ? 'data-category="' . esc_attr($it['category_slug']) . '"' : ''; ?>>
             <?php if ($img) : ?>
             <div class="rtp-thumb">
-                <img src="<?php echo $img; ?>" alt="<?php echo esc_attr($ttl); ?>">
-                <button class="rtp-open <?php echo esc_attr($preview_btn_pos); ?>" data-mode="<?php echo esc_attr($preview_type); ?>" data-url="<?php echo $url; ?>" data-title="<?php echo esc_attr($ttl); ?>" data-bps="<?php echo $bps_json; ?>" data-cta-text="<?php echo esc_attr($cta_text); ?>" data-cta-link="<?php echo esc_attr($cta_link); ?>" <?php echo $pid ? 'data-postid="' . (int) $pid . '"' : ''; ?> <?php echo $plink ? 'data-permalink="' . esc_url($plink) . '"' : ''; ?>><?php echo esc_html($btn); ?></button>
+                <img src="<?php echo esc_attr($img); ?>" alt="<?php echo esc_attr($ttl); ?>">
+                <button class="rtp-open <?php echo esc_attr($preview_btn_pos); ?>" data-mode="<?php echo esc_attr($preview_type); ?>" data-url="<?php echo esc_attr($url); ?>" data-title="<?php echo esc_attr($ttl); ?>" data-bps="<?php echo esc_attr($bps_json); ?>" data-cta-text="<?php echo esc_attr($cta_text); ?>" data-cta-link="<?php echo esc_attr($cta_link); ?>" <?php echo $pid ? 'data-postid="' . (int) $pid . '"' : ''; ?> <?php echo $plink ? 'data-permalink="' . esc_url($plink) . '"' : ''; ?>><?php echo esc_html($btn); ?></button>
             </div>
             <?php endif; ?>
             <?php if ($ttl) : ?><div class="rtp-title"><?php echo esc_html($ttl); ?></div><?php endif; ?>
@@ -125,7 +129,7 @@ class RTP_Render {
 							?>
                     <button data-w="<?php echo (int) $w; ?>" title="<?php echo esc_attr($t); ?>">
                         <?php if ($iconUrl) : ?>
-                        <img class="rtp-ic" src="<?php echo $iconUrl; ?>" alt="<?php echo esc_attr($t); ?>" />
+                        <img class="rtp-ic" src="<?php echo esc_attr($iconUrl); ?>" alt="<?php echo esc_attr($t); ?>" />
                         <?php elseif ($iconClass) : ?>
                         <?php if (isset($args['use_elementor_icons']) && $args['use_elementor_icons']) : ?>
                         <?php
@@ -137,11 +141,11 @@ class RTP_Render {
 											$icon_html = \Elementor\Icons_Manager::render_icon($icon_settings, array('aria-hidden' => 'true'));
 											// Extract just the SVG part from the returned HTML
 											if (preg_match('/<i[^>]*>(.*?)<\/i>/s', $icon_html, $matches)) {
-												echo $matches[0];
+												echo wp_kses_post($matches[0]);
 											}
 											?>
                         <?php else : ?>
-                        <i class="rtp-ic <?php echo $iconClass; ?>"></i>
+                        <i class="rtp-ic <?php echo esc_attr($iconClass); ?>"></i>
                         <?php endif; ?>
                         <?php else : ?>
                         <span class="rtp-ic"><?php echo esc_html($t ? substr($t, 0, 1) : '•'); ?></span>
@@ -155,12 +159,10 @@ class RTP_Render {
             <div class="rtp-framewrap"><iframe id="rtp-frame" src="" loading="lazy"></iframe></div>
         </div>
     </div>
-    <script>
-    if (typeof window.RTPAdvanced === 'undefined') {
-        window.RTPAdvanced = <?php echo wp_json_encode($js_config); ?>;
-    }
-    </script>
 </div>
+<script>
+window.RTPAdvanced = <?php echo wp_json_encode($js_config); ?>;
+</script>
 <?php
 		return ob_get_clean();
 	}

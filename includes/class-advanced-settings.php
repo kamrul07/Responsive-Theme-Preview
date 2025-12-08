@@ -16,7 +16,6 @@ class RTP_Advanced_Settings {
 			'device_button_active_color' => '#2563eb',
 			'device_button_hover_color' => '#1d4ed8',
 
-
 			// Topbar settings
 			'topbar_height' => 52,
 			'topbar_sticky' => true,
@@ -268,7 +267,7 @@ class RTP_Advanced_Settings {
 		$settings = wp_parse_args($settings, $defaults);
 
 		$config = array(
-			'topbar' => array(
+			'opbar' => array(
 				'height' => $settings['topbar_height'],
 			),
 			'overlay' => array(

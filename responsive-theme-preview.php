@@ -6,8 +6,8 @@ Author: Kamrul Hasan
 Text Domain: responsive-theme-preview
 Domain Path: /languages
 Version:         1.0.0
-Tested up to:    6.8
-Author URI:      mailto:kamrulhasanshuvo04@gmail.com
+Tested up to:    6.9
+Author URI:     https://kamrul.tech/
 WC tested up to: 10.0
 Requires PHP:    7.4
 Elementor tested up to: 3.31
@@ -23,9 +23,9 @@ define('RTP_VER', '3.11.1');
 define('RTP_PATH', plugin_dir_path(__FILE__));
 define('RTP_URL', plugin_dir_url(__FILE__));
 
-add_action('plugins_loaded', function () {
-	load_plugin_textdomain('responsive-theme-preview', false, dirname(plugin_basename(__FILE__)) . '/languages');
-});
+// add_action('plugins_loaded', function () {
+// 	load_plugin_textdomain('responsive-theme-preview', false, dirname(plugin_basename(__FILE__)) . '/languages');
+// });
 
 add_action('wp_enqueue_scripts', function () {
 	wp_register_style('rtp-front', RTP_URL . 'assets/css/front.css', array(), RTP_VER);
@@ -134,9 +134,6 @@ add_action('template_redirect', function () {
 		);
 	}
 
-	// Debug output
-	error_log('RTP Global Settings: ' . print_r($global_settings, true));
-
 	status_header(200);
 	nocache_headers();
 
@@ -155,26 +152,26 @@ add_action('template_redirect', function () {
     }
 
     .rtp-topbar .rtp-devices button {
-        background: <?php echo $global_settings['device_button_hover_color'];
+        background: <?php echo esc_attr($global_settings['device_button_hover_color']);
         ?> !important;
-        color: <?php echo $global_settings['device_button_active_color'];
+        color: <?php echo esc_attr($global_settings['device_button_active_color']);
         ?> !important;
     }
 
     .rtp-topbar .rtp-devices button.active {
-        background: <?php echo $global_settings['device_button_active_color'];
+        background: <?php echo esc_attr($global_settings['device_button_active_color']);
         ?> !important;
     }
 
     .rtp-topbar .rtp-topbar-title {
-        font-size: <?php echo $global_settings['topbar_title_size'];
+        font-size: <?php echo (int) $global_settings['topbar_title_size'];
         ?>px !important;
     }
 
     .rtp-topbar .rtp-cta {
-        background: <?php echo $global_settings['cta_button_bg_color'];
+        background: <?php echo esc_attr($global_settings['cta_button_bg_color']);
         ?> !important;
-        color: <?php echo $global_settings['cta_button_color'];
+        color: <?php echo esc_attr($global_settings['cta_button_color']);
         ?> !important;
     }
     </style>
@@ -183,7 +180,7 @@ add_action('template_redirect', function () {
 
 <body <?php body_class('rtp-preview-page'); ?>>
     <div class="rtp-wrapper">
-        <div class="rtp-topbar" style="background:<?php echo $global_settings['topbar_bg']; ?>;height: <?php echo (int) $global_settings['topbar_height']; ?>px; ">
+        <div class="rtp-topbar" style="background:<?php echo esc_attr($global_settings['topbar_bg']); ?>;height: <?php echo (int) $global_settings['topbar_height']; ?>px; ">
 
             <div class="rtp-topbar-title"><?php echo esc_html($title); ?></div>
             <div class="rtp-devices">
@@ -225,19 +222,19 @@ add_action('template_redirect', function () {
 					?>
                 <button data-w="<?php echo (int) $w; ?>px" title="<?php echo esc_attr($t); ?>">
                     <?php if ($iconUrl) : ?>
-                    <img class="rtp-ic" src="<?php echo $iconUrl; ?>" alt="<?php echo esc_attr($t); ?>" />
+                    <img class="rtp-ic" src="<?php echo esc_url($iconUrl); ?>" alt="<?php echo esc_attr($t); ?>" />
                     <?php elseif ($iconClass) : ?>
-                    <i class="rtp-ic <?php echo $iconClass; ?>"></i>
+                    <i class="rtp-ic <?php echo esc_attr($iconClass); ?>"></i>
                     <?php else : ?>
                     <span class="rtp-ic"><?php echo esc_html($t ? substr($t, 0, 1) : '•'); ?></span>
                     <?php endif; ?>
                 </button>
                 <?php endforeach; ?>
             </div>
-            <a class="rtp-cta" href="<?php echo $url ? $url : '#'; ?>" target="_blank" rel="noopener"><?php esc_html_e('Open Live', 'responsive-theme-preview'); ?></a>
+            <a class="rtp-cta" href="<?php echo esc_url($url ? $url : '#'); ?>" target="_blank" rel="noopener"><?php esc_html_e('Open Live', 'responsive-theme-preview'); ?></a>
         </div>
         <div class="rtp-framewrap" style="width:100%;top: <?php echo (int) $global_settings['topbar_height']; ?>px">
-            <iframe id="rtp-frame" src="<?php echo $url; ?>" style="width:100%;height:calc(100vh - <?php echo (int) $global_settings['topbar_height']; ?>px)"></iframe>
+            <iframe id="rtp-frame" src="<?php echo esc_url($url); ?>" style="width:100%;height:calc(100vh - <?php echo (int) $global_settings['topbar_height']; ?>px)"></iframe>
         </div>
     </div>
 
