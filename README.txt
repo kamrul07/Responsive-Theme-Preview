@@ -1,5 +1,5 @@
 === Responsive Theme Preview ===
-Contributors: Kamrul Hasan
+Contributors: kamrul0424
 Tags: preview, responsive, theme, elementor, gutenberg, bricks
 Requires at least: 5.2
 Tested up to: 6.9
