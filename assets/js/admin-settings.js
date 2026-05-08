@@ -237,7 +237,7 @@ jQuery(document).ready(function ($) {
   function showLoading() {
     if (!$("#rtp-loading-indicator").length) {
       $("body").append(
-        '<div id="rtp-loading-indicator" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999999; display: flex; align-items: center; justify-content: center;"><div style="background: #fff; padding: 20px; border-radius: 5px; text-align: center;"><div class="spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #0073aa; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 10px;">Saving settings...</p></div></div>'
+        '<div id="rtp-loading-indicator" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999999; display: flex; align-items: center; justify-content: center;"><div style="background: #fff; padding: 20px; border-radius: 5px; text-align: center;"><div class="spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #0073aa; border-radius: 50%; animation: rtp-spin 1s linear infinite;"></div><p style="margin-top: 10px;">Saving settings...</p></div></div>'
       );
     }
     $("#rtp-loading-indicator").show();
@@ -283,8 +283,4 @@ jQuery(document).ready(function ($) {
     $("#rtp-settings-form").append('<input type="hidden" id="rtp-settings-nonce" name="nonce" value="' + (rtpSettings.nonce || "") + '" />');
   }
 
-  // Add CSS for spinner animation
-  if (!$("#rtp-spinner-style").length) {
-    $("head").append('<style id="rtp-spinner-style">@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>');
-  }
 });

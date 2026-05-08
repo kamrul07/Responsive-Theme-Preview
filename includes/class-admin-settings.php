@@ -50,13 +50,13 @@ class RTP_Admin_Settings {
         wp_enqueue_script('wp-color-picker');
         wp_enqueue_script('rtp-admin-settings', RTP_URL . 'assets/js/admin-settings.js', array('jquery'), RTP_VER, true);
 
-        // Enqueue Themify Icons for admin settings
-        wp_enqueue_style('rtp-themify-icons', 'https://cdn.jsdelivr.net/npm/themify-icons@0.1.2/themify-icons.css', array(), '0.1.2');
-
         // Pass option name and nonce to JavaScript
         wp_localize_script('rtp-admin-settings', 'rtpSettings', array(
-            'optionName' => self::OPTION_NAME,
-            'nonce' => wp_create_nonce('rtp_save_settings'),
+            'optionName'   => self::OPTION_NAME,
+            'nonce'        => wp_create_nonce('rtp_save_settings'),
+            'resetNonce'   => wp_create_nonce('rtp_reset_settings'),
+            'resetConfirm' => __('Are you sure you want to reset all settings to their default values? This action cannot be undone.', 'responsive-theme-preview'),
+            'resetError'   => __('Error resetting settings. Please try again.', 'responsive-theme-preview'),
         ));
 
         // Add custom admin styles
@@ -224,6 +224,7 @@ class RTP_Admin_Settings {
    	color: white;
    	border-color: #0073aa;
    }
+   @keyframes rtp-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   ');
 
         // Add custom admin script
@@ -231,21 +232,50 @@ class RTP_Admin_Settings {
             jQuery(document).ready(function($) {
                 // Initialize color pickers
                 $(".rtp-color-picker").wpColorPicker();
-                
+
                 // Tab functionality
                 $(".rtp-settings-tabs .nav-tab").click(function(e) {
                     e.preventDefault();
                     var tab = $(this).data("tab");
-                    
+
                     $(".rtp-settings-tabs .nav-tab").removeClass("nav-tab-active");
                     $(this).addClass("nav-tab-active");
-                    
+
                     $(".rtp-tab-content").removeClass("active");
                     $("#" + tab).addClass("active");
                 });
-                
+
                 // Activate first tab by default
                 $(".rtp-settings-tabs .nav-tab:first").click();
+            });
+        ');
+
+        // Reset settings script
+        wp_add_inline_script('rtp-admin-settings', '
+            jQuery(document).ready(function($) {
+                $("#rtp-reset-settings").on("click", function(e) {
+                    e.preventDefault();
+                    if (confirm(rtpSettings.resetConfirm)) {
+                        $.ajax({
+                            url: ajaxurl,
+                            type: "POST",
+                            data: {
+                                action: "rtp_reset_settings",
+                                nonce: rtpSettings.resetNonce
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    location.reload();
+                                } else {
+                                    alert(rtpSettings.resetError);
+                                }
+                            },
+                            error: function() {
+                                alert(rtpSettings.resetError);
+                            }
+                        });
+                    }
+                });
             });
         ');
     }
@@ -291,6 +321,9 @@ class RTP_Admin_Settings {
                 case 'focus_outline':
                 case 'debug_mode':
                 case 'log_events':
+                case 'enable_preview_filtering':
+                case 'filter_by_category':
+                case 'show_filter_count':
                     $sanitized[$key] = (bool) $value;
                     break;
 
@@ -315,6 +348,7 @@ class RTP_Admin_Settings {
                 // Color values
                 case 'frame_border_color':
                 case 'frame_shadow_color':
+                case 'topbar_bg':
                 case 'device_button_active_color':
                 case 'device_button_hover_color':
                 case 'overlay_loading_color':
@@ -782,35 +816,6 @@ class RTP_Admin_Settings {
         </p>
     </form>
 </div>
-
-<script>
-jQuery(document).ready(function($) {
-    $('#rtp-reset-settings').on('click', function(e) {
-        e.preventDefault();
-
-        if (confirm('<?php esc_html_e('Are you sure you want to reset all settings to their default values? This action cannot be undone.', 'responsive-theme-preview'); ?>')) {
-            $.ajax({
-                url: ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'rtp_reset_settings',
-                    nonce: '<?php echo esc_js(wp_create_nonce('rtp_reset_settings')); ?>'
-                },
-                success: function(response) {
-                    if (response.success) {
-                        location.reload();
-                    } else {
-                        alert('<?php esc_html_e('Error resetting settings. Please try again.', 'responsive-theme-preview'); ?>');
-                    }
-                },
-                error: function() {
-                    alert('<?php esc_html_e('Error resetting settings. Please try again.', 'responsive-theme-preview'); ?>');
-                }
-            });
-        }
-    });
-});
-</script>
 <?php
     }
 }
@@ -847,11 +852,11 @@ add_action('wp_ajax_rtp_save_settings', function () {
     }
 
     // Check if settings data is provided
-    if (! isset($_POST['settings'])) {
+    if (! isset($_POST['settings']) || ! is_array($_POST['settings'])) {
         wp_send_json_error(__('No settings data provided.', 'responsive-theme-preview'));
     }
 
-    $settings = $_POST['settings'];
+    $settings = wp_unslash($_POST['settings']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized by sanitize_settings() below
 
     // Log the received settings for debugging
     error_log('RTP Settings received: ' . print_r($settings, true));

@@ -1184,11 +1184,10 @@ class RTP_Bricks_Element extends \Bricks\Element {
 			'button_border_radius' => isset($s['card_button_border_radius']) ? (int) $s['card_button_border_radius'] : $global_settings['button_border_radius'] ?? 8,
 		);
 
-		echo "<div id='" . esc_attr($section_id) . "' >";
+		$frame_css = '#' . esc_attr($section_id) . ' #rtp-frame { height: calc(100vh - ' . (int) ( $s['topbar_height'] ?? 3 ) . 'px); }';
+		wp_add_inline_style('rtp-front', $frame_css);
 
-		echo "<style>#" . esc_attr($section_id) . " #rtp-frame {
-				height: calc(100vh - " . (int) esc_attr($s['topbar_height'] ?? 3) . "px);
-			}</style>";
+		echo "<div id='" . esc_attr($section_id) . "' >";
 		// Output is already escaped in RTP_Render::html() method with wp_kses_post()
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo RTP_Render::html(array(
