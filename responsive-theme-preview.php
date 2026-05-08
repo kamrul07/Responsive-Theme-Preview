@@ -33,6 +33,35 @@ add_action('wp_enqueue_scripts', function () {
 
 	wp_enqueue_style('rtp-front');
 	wp_enqueue_script('rtp-front');
+
+	// Add preview-page-specific inline CSS and JS
+	if (is_singular(RTP_CPT::POST_TYPE)) {
+		$gs = class_exists('RTP_Admin_Settings') ? RTP_Admin_Settings::get_settings() : array(
+			'topbar_height'               => 52,
+			'topbar_title_size'           => 16,
+			'device_button_active_color'  => '#2563eb',
+			'device_button_hover_color'   => '#1d4ed8',
+			'cta_button_bg_color'         => '#2563eb',
+			'cta_button_color'            => '#ffffff',
+			'topbar_bg'                   => '#ffffff',
+		);
+
+		$css  = '.rtp-overlay { display: block; }' . "\n";
+		$css .= '.rtp-topbar .rtp-devices button { background: ' . esc_attr($gs['device_button_hover_color']) . ' !important; color: ' . esc_attr($gs['device_button_active_color']) . ' !important; }' . "\n";
+		$css .= '.rtp-topbar .rtp-devices button.active { background: ' . esc_attr($gs['device_button_active_color']) . ' !important; }' . "\n";
+		$css .= '.rtp-topbar .rtp-topbar-title { font-size: ' . (int) $gs['topbar_title_size'] . 'px !important; }' . "\n";
+		$css .= '.rtp-topbar .rtp-cta { background: ' . esc_attr($gs['cta_button_bg_color']) . ' !important; color: ' . esc_attr($gs['cta_button_color']) . ' !important; }' . "\n";
+		wp_add_inline_style('rtp-front', $css);
+
+		$js = 'document.addEventListener("click", function(e) {
+	var b = e.target.closest(".rtp-devices button");
+	if (!b) return;
+	var w = b.getAttribute("data-w") || "100%";
+	var f = document.getElementById("rtp-frame");
+	if (f) { f.style.width = w; }
+});';
+		wp_add_inline_script('rtp-front', $js);
+	}
 }, 20);
 
 require_once __DIR__ . '/includes/class-cpt.php';
@@ -145,36 +174,6 @@ add_action('template_redirect', function () {
     <meta charset="<?php bloginfo('charset'); ?>" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title><?php echo esc_html($title ? $title : __('Preview', 'responsive-theme-preview')); ?></title>
-    <link rel="stylesheet" href="<?php echo esc_url(RTP_URL . 'assets/css/front.css'); ?>?ver=<?php echo esc_attr(RTP_VER); ?>" />
-    <style>
-    .rtp-overlay {
-        display: block;
-    }
-
-    .rtp-topbar .rtp-devices button {
-        background: <?php echo esc_attr($global_settings['device_button_hover_color']);
-        ?> !important;
-        color: <?php echo esc_attr($global_settings['device_button_active_color']);
-        ?> !important;
-    }
-
-    .rtp-topbar .rtp-devices button.active {
-        background: <?php echo esc_attr($global_settings['device_button_active_color']);
-        ?> !important;
-    }
-
-    .rtp-topbar .rtp-topbar-title {
-        font-size: <?php echo (int) $global_settings['topbar_title_size'];
-        ?>px !important;
-    }
-
-    .rtp-topbar .rtp-cta {
-        background: <?php echo esc_attr($global_settings['cta_button_bg_color']);
-        ?> !important;
-        color: <?php echo esc_attr($global_settings['cta_button_color']);
-        ?> !important;
-    }
-    </style>
     <?php wp_head(); ?>
 </head>
 
@@ -238,17 +237,6 @@ add_action('template_redirect', function () {
         </div>
     </div>
 
-    <script>
-    document.addEventListener('click', function(e) {
-        var b = e.target.closest('.rtp-devices button');
-        if (!b) return;
-        var w = b.getAttribute('data-w') || '100%';
-        var f = document.getElementById('rtp-frame');
-        if (f) {
-            f.style.width = w;
-        }
-    });
-    </script>
     <?php wp_footer(); ?>
 </body>
 

@@ -83,6 +83,22 @@ class RTP_CPT {
 
 	public static function admin_media($hook) {
 		wp_enqueue_media();
+		$script = "jQuery(function($) {
+			$('#rtp_image_btn').on('click', function(e) {
+				e.preventDefault();
+				var f = wp.media({
+					title: 'Select Image',
+					multiple: false,
+					library: { type: 'image' }
+				});
+				f.on('select', function() {
+					var u = f.state().get('selection').first().get('url');
+					$('#rtp_image').val(u).trigger('change');
+				});
+				f.open();
+			});
+		});";
+		wp_add_inline_script('jquery', $script);
 	}
 
 	public static function metaboxes() {
@@ -112,25 +128,6 @@ class RTP_CPT {
         <td><strong><?php echo esc_html((string) $views); ?></strong></td>
     </tr>
 </table>
-<script>
-jQuery(function($) {
-    $('#rtp_image_btn').on('click', function(e) {
-        e.preventDefault();
-        var f = wp.media({
-            title: 'Select Image',
-            multiple: false,
-            library: {
-                type: 'image'
-            }
-        });
-        f.on('select', function() {
-            var u = f.state().get('selection').first().get('url');
-            $('#rtp_image').val(u).trigger('change');
-        });
-        f.open();
-    });
-});
-</script>
 <?php
 	}
 
@@ -138,7 +135,7 @@ jQuery(function($) {
 		if ($post->post_type !== self::POST_TYPE) {
 			return;
 		}
-		if (! isset($_POST['rtp_preview_nonce']) || ! wp_verify_nonce($_POST['rtp_preview_nonce'], 'rtp_preview_meta')) {
+		if (! isset($_POST['rtp_preview_nonce']) || ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['rtp_preview_nonce'])), 'rtp_preview_meta')) {
 			return;
 		}
 		if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {

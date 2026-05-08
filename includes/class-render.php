@@ -44,12 +44,10 @@ class RTP_Render {
 		// Generate JavaScript config
 		$js_config = RTP_Advanced_Settings::generate_js_config($advanced_settings);
 
+		wp_add_inline_style('rtp-front', $advanced_css);
+
 		ob_start();
 ?>
-<style>
-<?php echo wp_kses_post($advanced_css);
-?>
-</style>
 <div class='rtp-wrapper'>
     <?php if (isset($args['enable_category_filter']) && $args['enable_category_filter']) : ?>
     <div class="rtp-category-filter-wrapper">
@@ -174,10 +172,9 @@ class RTP_Render {
         </div>
     </div>
 </div>
-<script>
-window.RTPAdvanced = <?php echo wp_json_encode($js_config); ?>;
-</script>
 <?php
+		$js_data = 'window.RTPAdvanced = ' . wp_json_encode($js_config) . ';';
+		wp_add_inline_script('rtp-front', $js_data, 'before');
 		return ob_get_clean();
 	}
 }
