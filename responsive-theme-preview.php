@@ -5,7 +5,7 @@ Description: Preview templates in responsive frames (popup or separate page). Wo
 Author: Kamrul Hasan
 Text Domain: responsive-theme-preview
 Domain Path: /languages
-Version:         1.0.0
+Version:         1.0.1
 Tested up to:    6.9
 Author URI:     https://kamrul.tech/
 WC tested up to: 10.0
